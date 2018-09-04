@@ -101,6 +101,10 @@ sub ignore_msg
   # input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input0
   return 1 if $msg =~ /^input: .* as \/devices.*/;
 
+  # audit: type=1400 audit(1534803127.077:68): apparmor="STATUS" operation="profile_replace" \
+  # profile="unconfined" name="/usr/bin/evince//sanitized_helper" pid=7257 comm="apparmor_parser"
+  return 1 if $msg =~ /^audit:.* apparmor=\"STATUS\"/;
+
   return 0;
 }
 
