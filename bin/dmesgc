@@ -42,13 +42,24 @@ sub format_msg
   {
     my %packet;
     &parse_dropped_packet($1, \%packet);
-    $msg = sprintf "%s: dropped %s packet: %s:%d -> %s:%d",
-      $packet{'IN'},
-      $packet{'PROTO'},
-      $packet{'SRC'},
-      $packet{'SPT'},
-      $packet{'DST'},
-      $packet{'DPT'};
+
+    if ($packet{'PROTO'} eq 'ICMP')
+    {
+      $msg = sprintf "%s: dropped ICMP packet: %s -> %s",
+        $packet{'IN'},
+        $packet{'SRC'},
+        $packet{'DST'};
+    }
+    elsif ($packet{'PROTO'} =~ /(TCP|UDP)/)
+    {
+      $msg = sprintf "%s: dropped %s packet: %s:%d -> %s:%d",
+        $packet{'IN'},
+        $packet{'PROTO'},
+        $packet{'SRC'},
+        $packet{'SPT'},
+        $packet{'DST'},
+        $packet{'DPT'};
+    }
   }
 
   return $msg;
