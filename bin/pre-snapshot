@@ -1,0 +1,23 @@
+#!/bin/bash
+
+export PATH=/com/scripts/bin:$PATH
+
+# Zero a number of log files under /var/log
+wipe-var-log
+
+# Clear out any downloaded .deb files under /var/cache
+apt-get clean
+
+# Zero freespace
+dd if=/dev/zero of=/zero >/dev/null 2>&1 &
+while :
+do
+  pid=$(pidof dd 2>/dev/null)
+  [[ $? -ne 0 ]] && break
+  kill -USR1 $pid
+  sleep 10
+done
+
+sync; sync; reboot
+
+## vim: ts=2 sw=2 et fdm=marker :
