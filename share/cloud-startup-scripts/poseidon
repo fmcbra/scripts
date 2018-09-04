@@ -31,10 +31,10 @@ git clone https://github.com/fmcbra/scripts /com/scripts
 export PATH="/com/scripts/bin:$PATH"
 
 # Execute bootstrap script
-cd / && bootstrap                     \
-  LOCAL_HOST=gate-1                   \
-  LOCAL_DOMAIN=destinatech.local      \
-  INET_FQDN=gate.vnet.destinatech.com \
+cd / && bootstrap                         \
+  LOCAL_HOST=poseidon-1                   \
+  LOCAL_DOMAIN=destinatech.local          \
+  INET_FQDN=poseidon.vnet.destinatech.com \
   2>&1 |tee -a /var/log/bootstrap.log
 
 exit 0
