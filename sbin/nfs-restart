@@ -1,0 +1,35 @@
+#!/bin/bash
+
+function systemd_active_units()
+{
+  systemctl list-units \
+    |grep 'loaded active ' \
+    |awk '{print $1}'
+}
+
+function nfs_units()
+{
+  systemd_active_units |grep '.service$' |egrep '(nfs|rpcbind)'
+}
+
+function error()
+{
+  echo >&2 "$(basename "$0"): error:" "$@"
+}
+
+
+for s in $(nfs_units)
+do
+  echo systemctl restart $s
+  systemctl restart $s; ret=$?
+  [[ $rc -eq 0 ]] && continue
+
+  error "service $s failed to restart (exit status = $rc)"
+  #exit 1
+done
+
+exit 0
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##
