@@ -1,0 +1,159 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+# {{{ function parse_args()
+function parse_args()
+{
+  while [[ $# -gt 0 ]]
+  do
+    local arg="$1"; shift
+    case "$arg" in
+      --vm)
+        IS_VM=1
+        ;;
+      --xen)
+        IS_XEN=1
+        ;;
+      --kvm)
+        IS_KVM=1
+        ;;
+      --hyperv)
+        IS_HYPERV=1
+        ;;
+      -a|--aws)
+        CLOUD_AWS=1
+        ;;
+      -g|--gcp)
+        CLOUD_GCP=1
+        ;;
+      -z|--azure)
+        CLOUD_AZURE=1
+        ;;
+      --root-dev|--root-dev=*)
+        [[ $arg == --root-dev ]] && arg="$(echo -n "$1"; shift)"
+        local rdev=$(opt_arg --root-dev "$arg" "$@")
+        [[ -z $rdev ]] && die "option '--root-dev' requires an argument"
+
+        [[ -b $rdev ]] || die "argument to --root-dev must be a block device"
+        ROOT_DEV=$rdev
+        ;;
+      --root-mnt|--root-mnt=*)
+        [[ $arg == --root-dev ]] && arg="$(echo -n "$1"; shift)"
+        local mnt=$(opt_arg --root-mnt "$arg" "$@")
+        [[ -z $mnt ]] && die "option '--root-mnt' requires an argument"
+
+        [[ -d $mnt ]] || die "argument '$mnt' to --root-mnt isn't a directory"
+        ROOT_MNT=$mnt
+        ;;
+      --pool-mnt|--pool-mnt=*)
+        [[ $arg == --root-dev ]] && arg="$(echo -n "$1"; shift)"
+        local mnt=$(opt_arg --pool-mnt "$arg" "$@")
+        [[ -z $mnt ]] && die "option '--pool-mnt' requires an argument"
+
+        [[ -d $mnt ]] || die "argument '$mnt' to --pool-mnt isn't a directory"
+        POOL_MNT=$mnt
+        ;;
+      --local-host|--local-host=*)
+        [[ $arg == --root-dev ]] && arg="$(echo -n "$1"; shift)"
+        local name=$(opt_arg --local-host "$arg" "$@")
+        [[ -z $name ]] && die "option '--local-host' requires an argument"
+        LOCAL_HOST="$name"
+        ;;
+      --local-domain|--local-domain=*)
+        [[ $arg == --root-dev ]] && arg="$(echo -n "$1"; shift)"
+        local name=$(opt_arg --local-domain "$arg" "$@")
+        [[ -z $name ]] && die "option '--local-domain' requires an argument"
+        LOCAL_DOMAIN="$name"
+        ;;
+      --inet-fqdn|--inet-fqdn=*)
+        [[ $arg == --root-dev ]] && arg="$(echo -n "$1"; shift)"
+        local name=$(opt_arg --inet-fqdn "$arg" "$@")
+        [[ -z $name ]] && die "option '--inet-fqdn' requires an argument"
+        INET_FQDN="$name"
+        ;;
+      -*)
+        die "unrecognised option '$arg'"
+        ;;
+      *)
+        die "unexpected argument '$arg'"
+        ;;
+    esac
+  done
+
+  [[ $((CLOUD_AWS+CLOUD_AZURE+CLOUD_GCP)) -gt 1 ]] \
+    && die "options --aws, --azure and --gcp are mutually exclusive"
+
+  [[ $((IS_XEN+IS_KVM+IS_HYPERV)) -gt 1 ]] \
+    && die "options --xen, --kvm and --hyperv are mutually exclusive"
+}
+## }}}
+
+function main()
+{
+  parse_args "$@"
+
+  # Example bootstrap.env:
+  #
+  #   IS_VM=0
+  #   IS_XEN=0
+  #   IS_KVM=0
+  #   IS_HYPERV=0
+  #   CLOUD_AWS=0
+  #   CLOUD_AZURE=0
+  #   CLOUD_GCP=0
+  #   ROOT_DEV=/dev/sda
+  #   ROOT_MNT=/mnt/root
+  #   POOL_MNT=/mnt/pool
+  #   LOCAL_HOST=vbox
+  #   LOCAL_DOMAIN=lenovo-idp310.local
+  #   INET_FQDN=vbox.lenovo-idp310.local
+
+  echo IS_VM="$IS_VM"
+  echo IS_XEN="$IS_XEN"
+  echo IS_KVM="$IS_KVM"
+  echo IS_HYPERV="$IS_HYPERV"
+  echo CLOUD_AWS="$CLOUD_AWS"
+  echo CLOUD_AZURE="$CLOUD_AZURE"
+  echo CLOUD_GCP="$CLOUD_GCP"
+  echo ROOT_DEV="$ROOT_DEV"
+  echo ROOT_MNT="$ROOT_MNT"
+  echo POOL_MNT="$POOL_MNT"
+  echo LOCAL_HOST="$LOCAL_HOST"
+  echo LOCAL_DOMAIN="$LOCAL_DOMAIN"
+  echo INET_FQDN="$INET_FQDN"
+
+  return 0
+}
+
+# Defaults
+IS_VM=0
+IS_XEN=0
+IS_KVM=0
+IS_HYPERV=0
+CLOUD_AWS=0
+CLOUD_AZURE=0
+CLOUD_GCP=0
+ROOT_DEV=
+ROOT_MNT=/mnt/root
+POOL_MNT=/mnt/pool
+LOCAL_HOST=localhost
+LOCAL_DOMAIN=localdomain
+INET_FQDN=localhost.localdomain
+
+# Source existing /var/lib/bootstrap.env if it exists
+for benv in /var/lib/bootstrap.env
+do
+  if [[ -f $benv ]]
+  then
+    source $benv || die "$benv: source failed"
+  fi
+done
+
+main "$@"
+exit $?
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##

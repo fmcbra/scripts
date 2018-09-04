@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Ensure $HOME is set
+[[ -z $HOME ]] && export HOME=/root
+
+# Make sure this script runs once only
+[[ -f /var/lib/cloud-startup.executed ]] && exit 0
+touch /var/lib/cloud-startup.executed
+
+# Ensure unattended-upgrades isn't running
+service unattended-upgrades stop
+
+# tee(1) std{out,err} to log file
+exec > >(tee -a /var/log/cloud-startup.log) 2>&1
+
+export DEBIAN_FRONTEND=noninteractive
+apt_opts=(
+  '-o' 'Dpkg::Options::=--force-confdef'
+  '-o' 'Dpkg::Options::=--force-confold'
+  '-o' 'Dpkg::Progress-Fancy=false'
+  '-o' 'APT::Color=false'
+)
+
+# Install dependencies
+apt-get -yq ${apt_opts[@]} update
+apt-get -yq ${apt_opts[@]} install git less make
+
+# Clone scripts repo
+mkdir -p /com
+git clone https://github.com/fmcbra/scripts /com/scripts
+export PATH="/com/scripts/bin:$PATH"
+
+# Execute bootstrap script
+cd / && bootstrap                     \
+  LOCAL_HOST=filer-1                   \
+  LOCAL_DOMAIN=destinatech.local      \
+  INET_FQDN=filer.vnet.destinatech.com \
+  2>&1 |tee -a /var/log/bootstrap.log
+
+exit 0

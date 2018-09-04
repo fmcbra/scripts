@@ -1,0 +1,105 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+# Ensure /sbin and /usr/sbin are in PATH
+export PATH="/sbin:/usr/sbin:$PATH"
+
+# Option defaults
+opt_help=0
+opt_ipv4=1
+opt_ipv6=0
+opt_mangle=0
+opt_raw=0
+opt_security=0
+
+# Tables to list by default
+tables="filter nat"
+
+## {{{ function list_tables() { ... }
+function list_tables()
+{
+  local val=
+  local table=
+
+  for opt in help ipv{4,6} mangle raw security
+  do
+    eval "val=\$opt_$opt"
+    case "$opt" in
+      mangle|raw|security)
+        [[ $val -ne 0 ]] && tables="$tables $opt"
+        ;;
+      *)
+        ;;
+    esac
+  done
+
+  for table in $tables
+  do
+    echo -e "\n>>> iptables -vnL -t $table\n"
+    iptables -vnL -t $table |sed 's,^,    ,g'
+  done
+
+  return 0
+}
+## }}}
+
+## {{{ function main() { ... }
+function main()
+{
+  if [[ $# -gt 0 ]]
+  then
+    while [[ $# -gt 0 ]]
+    do
+      local arg="$1"
+      shift
+
+      case "$arg" in
+        -h|--help)
+          opt_help=1
+          ;;
+        -4)
+          opt_ipv4=1
+          ;;
+        -6)
+          opt_ipv6=1
+          ;;
+        --mangle)
+          opt_mangle=1
+          ;;
+        --raw)
+          opt_raw=1
+          ;;
+        --security)
+          opt_security=1
+          ;;
+        -*)
+          if [[ $arg != -- ]]
+          then
+            echo >&2 "Unrecognised option '$arg'"
+            exit 1
+          fi
+
+          set -- "$@"
+          break 2
+          ;;
+        *)
+          echo >&2 "Unexpected argument '$arg'"
+          exit 1
+          ;;
+      esac
+    done
+  fi
+
+  list_tables
+  return $?
+}
+## function main() }}}
+
+main "$@"
+exit $?
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##

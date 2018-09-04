@@ -1,0 +1,12 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+for log in /var/log/{{audit/audit,auth,daemon,kern,ssh{,guar}d,user}.log,mail.*,btmp,debug,messages,{fail,last,sys}log}
+do
+  [[ -e $log ]] || continue
+  : > $log
+done
+
+#rm -rf /var/log/journal/*

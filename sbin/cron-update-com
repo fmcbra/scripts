@@ -1,0 +1,24 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+# Bail early if /com doesn't exist
+[[ -d /com ]] || exit 0
+
+status=0
+find /com -type d -name .git |while read gitdir
+do
+  dir="$(dirname "$gitdir")"
+  cd "$dir" || die "$dir: cd failed"
+  git pull -q
+  rc=$?
+  [[ $rc -eq 0 ]] && continue
+  status=1
+done
+
+exit $status
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##

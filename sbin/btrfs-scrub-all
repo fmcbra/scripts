@@ -1,0 +1,17 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+mount 2>/dev/null |grep 'on .* type btrfs' |awk '{print $3}' |while read mount
+do
+  echo >&2 "Scrubbing $mount..."
+  btrfs scrub start -B -c3 $mount || die "$mount: btrfs scrub failed"
+  echo >&2
+done
+
+exit 0
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##

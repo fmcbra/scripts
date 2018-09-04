@@ -1,0 +1,114 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+function notice()
+{
+  echo
+  echo "***"
+  echo "** " "$@"
+  echo "***"
+  echo
+}
+
+function info()
+{
+  echo ">>>" "$@"
+}
+
+## {{{ function running_services() { ... }
+function running_services()
+{
+  systemctl list-units |grep running |grep '\.service' |awk '{print $1}'
+}
+## }}}
+
+## {{{ function stop_services() { ... }
+function stop_services()
+{
+  for s in $(running_services)
+  do
+    case "$(basename $s .service)" in
+      dbus|rsyslog|ssh|systemd-*|*tty*@*tty*|user@*)
+        echo "Skipping $s"
+        continue
+        ;;
+      *)
+        echo "Stopping $s"
+        systemctl stop $s
+        ;;
+    esac
+  done
+}
+## }}}
+
+## {{{ function restart_services() { ... }
+function restart_services()
+{
+  info "Re-executing systemd"
+  systemctl daemon-reexec || exit 1
+
+  info "Restarting networking.service"
+  service networking restart || exit 1
+
+  for s in $(running_services)
+  do
+    echo "Restarting $s"
+    systemctl restart $s
+  done
+}
+## }}}
+
+## {{{ function create_zram_tmproot() { ... }
+function create_zram_tmproot()
+{
+  mkdir /tmp/tmproot || exit 1
+
+  info "Configuring /dev/zram0"
+  modprobe zram || exit 1
+  echo lz4 > /sys/block/zram0/comp_algorithm || exit 1
+  echo $((1024+512))M > /sys/block/zram0/disksize || exit 1
+
+  info "Creating ext4 filesystem on /dev/zram0"
+  mkfs -t ext4 /dev/zram0 || exit 1
+  mount /dev/zram0 /tmp/tmproot || exit 1
+  mkdir /tmp/tmproot/{proc,sys,dev,run,usr,var,tmp,oldroot} || exit 1
+}
+## }}}
+
+## {{{ function copy_rootfs_to_tmproot() { ... }
+function copy_rootfs_to_tmproot()
+{
+  info "Copying / to /tmproot"
+  cd /
+  cp -ax . /tmp/tmproot/ || exit 1
+}
+## }}}
+
+## {{{ function pivot_to_tmproot() { ... }
+function pivot_to_tmproot()
+{
+  info "Switching / to /tmproot"
+  mount --make-rprivate / || exit 1
+  pivot_root /tmp/tmproot /tmp/tmproot/oldroot || exit 1
+  for i in dev proc sys run; do mount --move /oldroot/$i /$i || exit 1; done
+}
+## }}}
+
+notice "Stopping services"
+stop_services
+
+notice "Migrating / to /tmp/tmproot"
+create_zram_tmproot
+copy_rootfs_to_tmproot
+pivot_to_tmproot
+
+notice "Restarting services"
+restart_services
+
+exit 0
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##

@@ -1,0 +1,27 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+if [[ $# -ne 1 ]]
+then
+  echo >&2 "Usage: $SCRIPT_NAME <path>"
+  exit 1
+fi
+
+path="$1"
+[[ $path{0:1} != / ]] && path="$(realpath "$path")"
+while :
+do
+  is_mount=0
+  mountpoint "$path" >/dev/null 2>&1 && is_mount=1
+  [[ $is_mount -eq 1 ]] && break
+  path="$(dirname "$path")"
+done
+
+echo "$path"
+exit 0
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##

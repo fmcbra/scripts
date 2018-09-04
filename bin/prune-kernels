@@ -1,0 +1,18 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+# Ensure required dependencies don't accidentally get removed on next apt-get autoremove
+apt-get install initramfs-tools initramfs-tools-core klibc-utils libklibc linux-base \
+  || die "apt-get failed"
+
+prune_kernels=$(dpkg -l |grep 'linux-image-[[:digit:]]' |tail -n -1 |awk '{print $2}')
+[[ -z $prune_kernels ]] && exit 0
+
+exec apt-get purge $prune_kernels "$@"
+die "apt-get: exec failed"
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##

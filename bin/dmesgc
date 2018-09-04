@@ -1,0 +1,129 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use Term::ANSIColor;
+
+sub parse_dropped_packet
+{
+  my ($msg, $p) = @_;
+
+  my @words = split /\s+/, $msg;
+  for my $word (@words)
+  {
+    if ($word =~ /^([^=]+)\=(.*)$/)
+    {
+      my ($var, $val) = ($1, $2);
+      if ($var =~ /^LEN|TTL|ID|(S|S)PT|LEN$/)
+      {
+        $p->{$var} = scalar $val;
+      }
+      else
+      {
+        $p->{$var} = $val;
+      }
+    }
+    elsif ($word =~ /^([A-Z]+)$/)
+    {
+      $p->{$1} = 1;
+    }
+  }
+}
+
+sub format_msg
+{
+  my ($msg) = @_;
+
+  # [00053200.52] Dropped packet: IN=wifi0 OUT= MAC=0c:d2:92:71:e1:a2:2c:fd:a1:cd:79:e8:08:00 \
+  #   SRC=192.168.1.254 DST=192.168.1.150 LEN=73 TOS=0x00 PREC=0x00 TTL=64 ID=0 DF PROTO=UDP \
+  #   SPT=18018 DPT=46454 LEN=53
+  if ($msg =~ /^Dropped packet: (.*)$/)
+  {
+    my %packet;
+    &parse_dropped_packet($1, \%packet);
+    $msg = sprintf "%s: dropped %s packet: %s:%d -> %s:%d",
+      $packet{'IN'},
+      $packet{'PROTO'},
+      $packet{'SRC'},
+      $packet{'SPT'},
+      $packet{'DST'},
+      $packet{'DPT'};
+  }
+
+  return $msg;
+}
+
+sub print_line
+{
+  my ($s, $n, $m) = @_;
+  $s = scalar $s;
+  $n = substr $n, 0, 2;
+  $n = "${n}0" if length($n) < 2;
+  $m = &format_msg($m);
+  printf "%s[%s", color('green'), color('reset');
+  printf "%08d%s.%s%02d", $s, color('green'), color('reset'), $n;
+  printf "%s]%s", color('green'), color('reset');
+  printf " %s\n", $m;
+}
+
+sub ignore_msg
+{
+  my $msg = shift;
+
+  # mount.cifs warning that more secure SMBv2.x used in place of SMBv1
+  return 1 if $msg =~ /^No dialect specified.*more secure dialect.*SMB/;
+
+  # systemd[1]: File $line:$line configures an IP firewall (IPAddressDeny=any),
+  # but the local system does not support BPF/cgroup based firewalling.
+  return 1 if $msg =~ /^systemd.* File .* configures an IP firewall/;
+
+  # systemd[1]: Proceeding WITHOUT firewalling in effect!
+  # (This warning is only shown for the first loaded unit using IP firewalling.)
+  return 1 if $msg =~ /^systemd.* Proceeding WITHOUT firewalling/;
+
+  # audit: type=1130 audit(1525986113.897:108): pid=1 uid=0 auid=4294967295 \
+  # ses=4294967295 subj=system_u:system_r:init_t:s0 \
+  # msg='unit=auditd comm="systemd" exe="/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+  return 1 if $msg =~ /^audit: .* msg=.* res=success/;
+
+  # input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input0
+  return 1 if $msg =~ /^input: .* as \/devices.*/;
+
+  return 0;
+}
+
+sub parse_line
+{
+  my ($ent, $line) = @_;
+
+  unless ($line =~ /^\[\s*([\d\.]+)\]\s+(.*)$/)
+  {
+    print STDERR "unmatched line: $line\n";
+    return;
+  }
+
+  my $ts = $1;
+  my $msg = $2;
+
+  return if &ignore_msg($msg);
+
+  $ts =~ s/^\s+//;
+  my ($sec, $nsec) = split /\./, $ts;
+
+  &print_line($sec, $nsec, $msg)
+}
+
+my $tail_cmd = 'dmesg -w 2>/dev/null';
+open(my $log_fh, '-|', $tail_cmd) or die "open() failed: $!";
+
+while (my $line = <$log_fh>)
+{
+  chomp $line;
+  my %entry = ();
+  &parse_line(\%entry, $line);
+}
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##

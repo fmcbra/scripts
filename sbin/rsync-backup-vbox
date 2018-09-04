@@ -1,0 +1,101 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+readonly BACKUP_ROOT=/
+readonly BACKUP_METHOD=ssh
+readonly BACKUP_LOG=/var/log/rsync-backup.log
+readonly SSH_REMOTE_USER=root
+readonly SSH_REMOTE_HOST=master.local
+readonly SSH_REMOTE_PATH=/backup/system/vbox.lenovo-idp310.local
+
+[[ -d $BACKUP_ROOT ]] || die "backup root '$BACKUP_ROOT' doesn't exist"
+
+case "$BACKUP_METHOD" in
+  ssh)
+    ;;
+  *)
+    die "backup method '$BACKUP_METHOD' not supported"
+    ;;
+esac
+
+[[ -f $BACKUP_LOG ]] || {
+  touch "$BACKUP_LOG" || die "$BACKUP_LOG: touch failed"
+}
+chmod 0600 "$BACKUP_LOG" || die "$BACKUP_LOG: chmod failed"
+
+rsync_opts=(
+  -av
+  -AS
+  -e$BACKUP_METHOD
+  --devices
+  --specials
+  --numeric-ids
+  --delete-after
+)
+
+for excl_path in /dev /proc /run /sys /var/lib/lxcfs
+do
+  rsync_opts+=("--exclude=$excl_path")
+  rsync_opts+=("--exclude=$excl_path/*")
+done
+
+rsync_opts+=("--exclude=/var/cache/apt/archives/*.deb")
+rsync_opts+=("--exclude=/var/cache/lxc/*/*/var/cache/apt/archives/*.deb")
+rsync_opts+=("--exclude=/var/cache/lxc/*/*/var/lib/apt/lists/*_*")
+
+cron=0
+arg=
+while [[ $# -gt 0 ]]
+do
+  arg="$1"; shift
+  case "$arg" in
+    -n|--dry-run)
+      rsync_opts+=($arg)
+      ;;
+    --cron)
+      cron=1
+      ;;
+    *)
+      ;;
+  esac
+done
+
+tmp_log_file=$(mktemp -p /tmp $SCRIPT_NAME.XXXXXXXX) || die "mktemp failed"
+
+function cleanup()
+{
+  [[ -f $tmp_log_file ]] && rm -f "$tmp_log_file"
+}
+trap cleanup INT TERM QUIT
+
+start_datetime="$(date)"
+echo -e "[$(date)] rsync job starting...\n" > "$tmp_log_file"
+
+rsync                                                    \
+  $(for opt in "${rsync_opts[@]}"; do echo "$opt"; done) \
+  "$BACKUP_ROOT"                                         \
+  "$SSH_REMOTE_USER@$SSH_REMOTE_HOST:$SSH_REMOTE_PATH/"  \
+  >> "$tmp_log_file" 2>&1
+rc=$?
+
+end_datetime="$(date)"
+echo -ne "\n[$end_datetime] rsync job finished " >> "$tmp_log_file"
+[[ $rc -eq 0 ]] && echo -n "successfully" >> "$tmp_log_file"
+[[ $rc -ne 0 ]] && echo -n "with an error (return code $rc)" >> "$tmp_log_file"
+
+cat "$tmp_log_file" >> "$BACKUP_LOG"
+
+if [[ $rc -ne 0 || $cron -eq 0 ]]
+then
+  cat "$tmp_log_file"
+  exit $rc
+fi
+
+cleanup
+exit $rc
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##

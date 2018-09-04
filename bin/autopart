@@ -1,0 +1,172 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+## {{{ function zero_rdev_super(dev, mb) { ... }
+function zero_rdev_super()
+{
+  local dev="$1"
+  local mb="$2"
+
+  echo ">> Zeroing first ${mb}M of device $dev"
+  dd if=/dev/zero of=$dev bs=1024 count=$(($mb*1024)) >/dev/null 2>&1
+}
+## }}}
+
+## {{{ function wipe_drive() { ... }
+function wipe_drive()
+{
+  # Ensure no swap devices are active
+  swapoff -a
+
+  local d=
+  for d in "$DEV"*
+  do
+    [[ $d == $DEV ]] && continue
+    zero_rdev_super $d 16
+  done
+
+  zero_rdev_super "$DEV" 16
+
+  echo ">> Creating new empty msdos disk label"
+
+  local c=
+  for c in o w
+  do
+    sleep 0.5
+    echo "$c"
+  done | fdisk "$DEV" >/dev/null 2>&1
+
+  echo ">> Executing partprobe"
+
+  partprobe; ret=$?
+  if [[ $ret -ne 0 ]]
+  then
+    echo >&2 "$(basename "$0"): error: partprobe failed"
+    exit $ret
+  fi
+}
+## }}}
+
+## {{{ function create_boot_part() { ... }
+function create_boot_part()
+{
+  echo ">> Creating /boot partition"
+
+  local c=
+  for c in n p 1 '' "+$BOOTSZ" a w
+  do
+    sleep 0.1
+    echo "$c"
+  done | fdisk "$DEV" >/dev/null 2>&1
+
+  local ret=$?
+  if [[ $ret -ne 0 ]]
+  then
+    echo >&2 "$(basename "$0"): error: fdisk failed"
+    exit $ret
+  fi
+}
+## }}}
+
+## {{{ function create_swap_part() { ... }
+function create_swap_part()
+{
+  echo ">> Creating swap partition"
+
+  local c=
+  for c in n p 2 '' "+$SWAPSZ" t 2 82 w
+  do
+    sleep 0.1
+    echo "$c"
+  done | fdisk "$DEV" >/dev/null 2>&1
+
+  local ret=$?
+  if [[ $ret -ne 0 ]]
+  then
+    echo >&2 "$(basename "$0"): error: fdisk failed"
+    exit $ret
+  fi
+}
+## }}}
+
+## {{{ function create_nfsc_part() { ... }
+function create_nfsc_part()
+{
+  echo ">> Creating NFS/FS-Cache partition"
+
+  local c=
+  for c in n p 3 '' "+$NFSCSZ" w
+  do
+    sleep 0.1
+    echo "$c"
+  done | fdisk "$DEV" >/dev/null 2>&1
+
+  local ret=$?
+  if [[ $ret -ne 0 ]]
+  then
+    echo >&2 "$(basename "$0"): error: fdisk failed"
+    exit $ret
+  fi
+}
+## }}}
+
+## {{{ function create_root_part() { ... }
+function create_root_part()
+{
+  echo ">> Creating btrfs pool partition"
+  local c=
+  for c in n p 4 '' '' w
+  do
+    sleep 0.1
+    echo "$c"
+  done | fdisk "$DEV" >/dev/null 2>&1
+
+  local ret=$?
+  if [[ $ret -ne 0 ]]
+  then
+    echo >&2 "$(basename "$0"): error: fdisk failed"
+    exit $ret
+  fi
+}
+## }}}
+
+if [[ $# != 1 ]]
+then
+  echo >&2 "Usage: $(basename "$0") <device>"
+  exit 1
+fi
+
+# Defaults
+DEV="$1"
+BOOTSZ=256M
+SWAPSZ=1024M
+NFSCSZ=256M
+
+if ! [[ -e $DEV ]]
+then
+  echo >&2 "$(basename "$0"): error: device $DEV does not exist"
+  exit 1
+elif ! [[ -b $DEV ]]
+then
+  echo >&2 "$(basename "$0"): error: $DEV is not a block device"
+  exit 1
+fi
+
+# Wipe drive
+wipe_drive
+
+create_boot_part
+create_swap_part
+[[ -n $NFSCSZ ]] && create_nfsc_part
+create_root_part
+
+echo
+fdisk -l "$DEV"
+
+exit $?
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##

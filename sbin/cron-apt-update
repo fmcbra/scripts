@@ -1,0 +1,17 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+output="$(apt-get update 2>&2)"
+ret=$?
+[[ $ret -eq 0 ]] && exit 0
+
+error "apt-get exited with non-zero status $ret"
+echo -e "\nOutput:\n$(echo "$output" |sed 's,^,  ,g')"
+
+exit 0
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##

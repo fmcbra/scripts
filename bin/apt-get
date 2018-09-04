@@ -1,0 +1,65 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+function do_chattr()
+{
+  # n=srcpkgcache.bin; mv $n{,.old} && touch $n && chattr +C $n && cat $n.old > $n
+
+  local path="$1"
+  local attr=$(lsattr "$path" |awk '{print $1}') || die "lsattr failed"
+
+  # $path already has +C (no copy-on-write)
+  [[ ${attr/C/} != $attr ]] && return 0
+
+  echo >&2 "Disabling copy-on-write on $path"
+
+  local d="$(dirname "$path")"
+  local f="$(basename "$path")"
+  local t="$d/.$f.tmp.$$"
+  mv "$d/$f" "$t" || die "mv failed"
+  touch "$d/$f" || die "touch failed"
+  chattr +C "$d/$f" || die "chattr failed"
+  cat "$t" > "$d/$f" || die "cat failed"
+  rm -f "$t"
+  #lsattr "$path"
+}
+
+function path_is_on_btrfs()
+{
+  local path="$1"
+  local mount="$(pmount "$path")"
+
+  mount 2>/dev/null |grep -q "^.* on $mount type btrfs" && return 0
+  return 1
+}
+
+function main()
+{
+  local prog=
+  local cmd="$(basename "$0")"
+  [[ $cmd == apt-get ]] && prog=/usr/bin/apt-get
+  [[ $cmd == apt ]] && prog=/usr/bin/apt
+  [[ -z $prog ]] && die "internal error (cmd='$cmd' isnt't supported)"
+
+  $prog "$@"
+  local rc=$?
+
+  local lfs="$LFS"; LFS="$(echo -en '\n')";
+  find /var/cache/apt -type f -name \*.bin |while read bin_file
+  do
+    path_is_on_btrfs "$bin_file" || continue
+    do_chattr "$bin_file"
+  done
+  LFS="$lfs"
+
+  return $rc
+}
+
+main "$@"
+exit $?
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##

@@ -1,0 +1,165 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+# Control how noisy this script will be
+VERBOSE=
+
+# Our public (Internet-accessible) interface
+INET4_IF=${INET4_IF:-enp0s3}
+INET6_IF=${INET6_IF:-enp0s3}
+
+# Public address of router at home (g1.home.int.destinatech.uk)
+#
+# NOTE: This is a deliberately invalid address so that if this script
+# isn't run with the HOME_IP environment variable set appropriately,
+# iptables will exit with an error and we'll bail.
+HOME_IP=${HOME_IP:-123.456.789.10/32}
+
+## {{{ function _wrap() { ... }
+function _wrap()
+{
+  local out_tmp="$(mktemp /tmp/cmd-output.XXXXXXXX 2>/dev/null)"
+  [[ -z $out_tmp ]] && {
+    echo >&2 "$0: mktemp failed"
+    exit 1
+  }
+
+  [[ $VERBOSE -eq 1 ]] && echo >&2 "+" "$@"
+
+  local ret=
+  "$@"; ret=$?
+
+  if [[ $ret -eq 0 ]]
+  then
+    [[ $VERBOSE -eq 1 ]] && echo "$(< $out_tmp)"
+    rm -f "$out_tmp"
+    return 0
+  fi
+
+  echo >&2 "+" "$@"
+  echo >&2 "$(< $out_tmp)"
+  echo >&2
+  echo >&2 "error: $1 failed with exit status $ret; exiting."
+
+  rm -f "$out_tmp"
+
+  echo >&2 "error: flushing iptables and setting default chain policies to ACCEPT"
+  flush
+
+  exit 1
+}
+## }}}
+
+function modprobe()   { _wrap /sbin/modprobe "$@"; }
+function iptables()   { _wrap /sbin/iptables "$@"; }
+function ip6tables()  { _wrap /sbin/ip6tables "$@"; }
+
+## Load kernel modules
+
+for mod in {nf,ip}_conntrack; do
+  modprobe $mod
+done
+
+## {{{ function flush() { ... }
+function flush()
+{
+  ## Reset default policies
+
+  for chain in INPUT OUTPUT FORWARD
+  do
+    iptables -P $chain ACCEPT
+    ip6tables -P $chain ACCEPT
+  done
+
+  for chain in {PRE,POST}ROUTING OUTPUT
+  do
+    iptables -t nat -P $chain ACCEPT
+    ip6tables -t nat -P $chain ACCEPT
+  done
+
+  for chain in PREROUTING OUTPUT
+  do
+    iptables -t mangle -P $chain ACCEPT
+    ip6tables -t mangle -P $chain ACCEPT
+  done
+
+  ## Flush chains/tables and remove user-defined chains
+
+  for iptables in ip{,6}tables
+  do
+    $iptables -F
+    $iptables -t nat -F
+    $iptables -t mangle -F
+
+    $iptables -X
+    $iptables -t nat -X
+    $iptables -t mangle -X
+  done
+
+}
+## }}}
+
+# Perform flush/clear either because we're building an iptables
+# rule set from scratch, or because we were invoked with
+# argv[1] = "flush".
+
+if [[ $# -eq 0 ]]
+then
+  # Default
+  flush
+else
+  case "$1" in
+    list)
+      for iptables in ip{,6}tables
+      do
+        echo -en ">>> $iptables\n\n"
+        $iptables -vn -L
+	echo
+      done
+      exit 0
+      ;;
+
+    flush)
+      flush
+      exit 0
+      ;;
+
+    *)
+      echo >&2 "$0: invalid argument '$1'"
+      exit 1
+      ;;
+  esac
+fi
+
+## Default policies
+
+iptables -P INPUT DROP
+ip6tables -P INPUT DROP
+
+iptables -P FORWARD DROP
+ip6tables -P FORWARD DROP
+
+iptables -P OUTPUT ACCEPT
+ip6tables -P OUTPUT ACCEPT
+
+## Allow all on loopback interface
+
+# NOTE: the below iptables invokations covers both IP v4/6 by virtue
+# of having both 127.0.0.0/8 and ::1 addresses.
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+## Allow already established and related connections/packets
+
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+ip6tables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+## Allow access from home (*.home.int.destinatech.uk)
+
+iptables -A INPUT -i $INET4_IF -s $HOME_IP -j ACCEPT
+
+##
+# vim: ts=2 sw=2 et :
+##

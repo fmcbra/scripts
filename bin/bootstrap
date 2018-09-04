@@ -1,0 +1,301 @@
+#!/usr/bin/make -f
+
+## {{{ -------- [ Globals ] ------------------------------------------------------------------------
+
+ifeq ($(origin V), command line)
+  ifeq ($(V), 1)
+    VERBOSE = 1
+  endif
+endif
+
+SHELL = /bin/bash
+APT = bootstrap-helper apt-get
+
+BOOTSTRAP_ENV = /var/lib/bootstrap.env
+-include $(BOOTSTRAP_ENV)
+
+ifeq ($(origin LOCAL_HOST), undefined)
+  $(error required environment variable LOCAL_HOST unset)
+endif
+ifeq ($(origin LOCAL_DOMAIN), undefined)
+  $(error required environment variable LOCAL_DOMAIN unset)
+endif
+ifeq ($(origin INET_FQDN), undefined)
+  $(error required environment variable INET_FQDN unset)
+endif
+
+IS_VM       = $(shell bootstrap-helper is-vm;          rc=$$?; [[ $$rc -eq 0 ]] && v=1 || v=0; echo -n $$v)
+IS_XEN      = $(shell bootstrap-helper vm-is-xen;      rc=$$?; [[ $$rc -eq 0 ]] && v=1 || v=0; echo -n $$v)
+IS_KVM      = $(shell bootstrap-helper vm-is-kvm;      rc=$$?; [[ $$rc -eq 0 ]] && v=1 || v=0; echo -n $$v)
+IS_HYPERV   = $(shell bootstrap-helper vm-is-hyperv;   rc=$$?; [[ $$rc -eq 0 ]] && v=1 || v=0; echo -n $$v)
+
+CLOUD_AWS   = $(shell bootstrap-helper cloud-is-aws;   rc=$$?; [[ $$rc -eq 0 ]] && v=1 || v=0; echo -n $$v)
+CLOUD_GCP   = $(shell bootstrap-helper cloud-is-gcp;   rc=$$?; [[ $$rc -eq 0 ]] && v=1 || v=0; echo -n $$v)
+CLOUD_AZURE = $(shell bootstrap-helper cloud-is-azure; rc=$$?; [[ $$rc -eq 0 ]] && v=1 || v=0; echo -n $$v)
+
+IS_CLOUD    = $(shell bootstrap-helper is-cloud;       rc=$$?; [[ $$rc -eq 0 ]] && v=1 || v=0; echo -n $$v)
+
+## {{{ ifndef ROOT_DEV
+ifndef ROOT_DEV
+  ifeq ($(CLOUD_AWS), 1)
+    ROOT_DEV = /dev/xvda
+  else
+    ROOT_DEV = /dev/sda
+  endif
+endif
+## }}}
+
+ROOT_MNT = /mnt/root
+POOL_MNT = /mnt/pool
+
+SSHD_CONF = /etc/ssh/sshd_config
+
+SSH_PUBKEYS_URL = https://destinatech-production.appspot.com/pki/ssh/public
+DOTFILES_GIT_URL = https://github.com/fmcbra/dotfiles
+KSM_PRELOAD_URL = https://s3.eu-west-2.amazonaws.com/dtadm-public/ksm_preload.tar.xz
+
+KEYCHAIN_VERSION = 2.8.5
+KEYCHAIN_URL = https://github.com/funtoo/keychain/archive/$(KEYCHAIN_VERSION).tar.gz
+
+## {{{ $(PKG_PURGE)
+PKG_PURGE =          \
+  chrony             \
+  dmidecode          \
+  gdisk              \
+  ntp                \
+  python             \
+  python2.7          \
+  python2.7-minimal  \
+  python3.5          \
+  python3.5-minimal  \
+  unattended-upgrades
+## }}}
+
+## {{{ $(PKG_DEPS)
+PKG_DEPS =      \
+  btrfs-tools   \
+  cdebootstrap  \
+  debootstrap   \
+  curl          \
+  git           \
+  less          \
+  make          \
+  ncdu          \
+  parted        \
+  psmisc
+## }}}
+
+ifeq ($(CLOUD_AZURE), 1)
+  PKG_DEPS += waagent
+endif
+
+ALL_TARGETS =            \
+  all-pre                \
+  $(BOOTSTRAP_ENV)       \
+  configure-sshd         \
+  configure-debconf      \
+  install-deps           \
+  install-root-home      \
+  install-root-gitconfig \
+  install-com            \
+  purge-packages
+
+## }}} -------- [ Globals ] ------------------------------------------------------------------------
+
+.PHONY: all
+all: $(ALL_TARGETS)
+
+ifeq ($(origin LOCAL_HOST), undefined)
+  $(error required environment variable LOCAL_HOST unset)
+endif
+
+## {{{ target: all-pre
+ifdef VERBOSE
+.PHONY: all-pre
+all-pre:
+	@echo 'IS_VM        = $(IS_VM)'
+	@echo 'IS_XEN       = $(IS_XEN)'
+	@echo 'IS_KVM       = $(IS_KVM)'
+	@echo 'IS_HYPERV    = $(IS_HYPERV)'
+	@echo 'IS_CLOUD     = $(IS_CLOUD)'
+	@echo 'CLOUD_AWS    = $(CLOUD_AWS)'
+	@echo 'CLOUD_AZURE  = $(CLOUD_AZURE)'
+	@echo 'CLOUD_GCP    = $(CLOUD_GCP)'
+	@echo 'LOCAL_HOST   = $(LOCAL_HOST)'
+	@echo 'LOCAL_DOMAIN = $(LOCAL_DOMAIN)'
+	@echo 'INET_FQDN    = $(INET_FQDN)'
+	@echo 'ROOT_DEV     = $(ROOT_DEV)'
+	@echo 'ROOT_MNT     = $(ROOT_MNT)'
+	@echo 'POOL_MNT     = $(POOL_MNT)'
+else
+.PHONY: all-pre
+all-pre:
+endif
+## }}}
+
+## {{{ target: $(BOOTSTRAP_ENV)
+$(BOOTSTRAP_ENV): all-pre
+	@benv=$(BOOTSTRAP_ENV);            \
+	if ! [[ -f $$benv ]];              \
+	then                               \
+	  truncate -s0 $$benv;             \
+	  for line in                      \
+	    'IS_VM=$(IS_VM)'               \
+	    'IS_XEN=$(IS_XEN)'             \
+	    'IS_KVM=$(IS_KVM)'             \
+	    'IS_HYPERV=$(IS_HYPERV)'       \
+	    'CLOUD_AWS=$(CLOUD_AWS)'       \
+	    'CLOUD_AZURE=$(CLOUD_AZURE)'   \
+	    'CLOUD_GCP=$(CLOUD_GCP)'       \
+	    'LOCAL_HOST=$(LOCAL_HOST)'     \
+	    'LOCAL_DOMAIN=$(LOCAL_DOMAIN)' \
+	    'INET_FQDN=$(INET_FQDN)'       \
+	    'ROOT_DEV=$(ROOT_DEV)'         \
+	    'ROOT_MNT=$(ROOT_MNT)'         \
+	    'POOL_MNT=$(POOL_MNT)';        \
+	  do                               \
+	    echo "$$line" >> $$benv;       \
+	  done;                            \
+	fi
+## }}}
+
+## {{{ target: apt-update
+.PHONY: apt-update
+apt-update:
+	$(APT) update
+## }}}
+
+## {{{ target: purge-packages
+.PHONY: purge-packages
+purge-packages: apt-update
+	$(APT) purge $(PKG_PURGE)
+	$(APT) autoremove --purge -y
+## }}}
+
+## {{{ target: install-updates
+.PHONY: install-updates
+install-updates: apt-update
+	$(APT) dist-upgrade --fix-{broken,missing}
+## }}}
+
+## {{{ target: install-deps
+.PHONY: install-deps
+install-deps:
+	$(APT) install $(PKG_DEPS)
+## }}}
+
+## {{{ target: install-root-home
+.PHONY: install-root-home
+install-root-home:
+	rm -rf /root
+	mkdir -m0700 -p /root/.ssh
+	curl $(SSH_PUBKEYS_URL) > /root/.ssh/authorized_keys
+	chmod 0600 /root/.ssh/authorized_keys
+	git clone $(DOTFILES_GIT_URL) /root/.dotfiles
+	cd /root/.dotfiles && git submodule update --init --recursive
+	cd /root && for dotfile in .dotfiles/.[a-z]*; do ln -sfn $$dotfile; done
+## }}}
+
+## {{{ target: install-root-gitconfig
+.PHONY: install-root-gitconfig
+install-root-gitconfig:
+	git config --global user.name root
+	git config --global user.email root@$(LOCAL_HOST).$(LOCAL_DOMAIN)
+## }}}
+
+## {{{ target: install-ksm-preload
+.PHONY: install-ksm-preload
+install-ksm-preload:
+	curl $(KSM_PRELOAD_URL) |tar Jxvpf -C /
+## }}}
+
+## {{{ target: download-keychain
+.PHONY: download-keychain
+download-keychain:
+	mkdir -m0700 /var/tmp/bootstrap -p
+	curl -L -s -S $(KEYCHAIN_URL) > /var/tmp/bootstrap/keychain-$(KEYCHAIN_VERSION).tar.gz
+## }}}
+
+## {{{ target: install-keychain
+.PHONY: install-keychain
+install-keychain: download-keychain
+	tar zxf /var/tmp/bootstrap/keychain-$(KEYCHAIN_VERSION).tar.gz -C /var/tmp/bootstrap
+	install -d -m0755 /usr/share/local/bin
+	install -m0755 /var/tmp/bootstrap/keychain-$(KEYCHAIN_VERSION)/keychain /usr/local/bin
+	install -d -m0755 /usr/share/local/man/man1
+	install -m0644 /var/tmp/bootstrap/keychain-$(KEYCHAIN_VERSION)/keychain.1 /usr/local/man/man1
+	rm -rf /var/tmp/bootstrap/keychain-$(KEYCHAIN_VERSION)*
+## }}}
+
+## {{{ target: configure-sshd
+.PHONY: configure-sshd
+configure-sshd:
+	sed -i -e 's/^PermitRootLogin.*/PermitRootLogin prohibit-password/' $(SSHD_CONF)
+	sshd -t && service ssh restart
+## }}}
+
+## {{{ target: configure-debconf
+.PHONY: configure-debconf
+configure-debconf:
+	echo "set debconf/frontend Dialog" |debconf-communicate
+	echo "set debconf/priority high" |debconf-communicate
+## }}}
+
+## {{{ target: configure-locales
+.PHONY: configure-locales
+configure-locales:
+	locale-gen --purge en_GB.UTF-8
+	echo -e 'LANG="en_GB.UTF-8"\nLANGUAGE="en_GB:en"\n' > /etc/default/locale
+## }}}
+
+## {{{ target: configure-tzdata
+.PHONY: configure-tzdata
+configure-tzdata:
+	echo Etc/UTC > /etc/timezone
+	dpkg-reconfigure -f noninteractive tzdata
+## }}}
+
+.PHONY: install-com
+install-com: install-com-dotfiles
+
+## {{{ target: install-com-dotfiles
+.PHONY: install-com-dotfiles
+install-com-dotfiles:
+	git clone https://github.com/fmcbra/dotfiles /com/dotfiles
+	cd /com/dotfiles && git submodule update --init --recursive
+## }}}
+
+.PHONY: upgrade-buster
+upgrade-buster: upgrade-buster-pre upgrade-buster-post
+
+## {{{ target: upgrade-buster-pre
+.PHONY: upgrade-buster-pre
+upgrade-buster-pre:
+	sed -i -e s/stretch/buster/g /etc/apt/sources.list
+	$(APT) update
+	$(APT) dist-upgrade
+	$(APT) clean
+## }}}
+
+## {{{ target: upgrade-buster-post
+.PHONY: upgrade-buster-post
+upgrade-buster-post: prune-kernels
+	$(APT) clean
+	reboot
+## }}}
+
+## {{{ target: prune-kernels
+.PHONY: prune-kernels
+prune-kernels:
+	/com/scripts/bin/prune-kernels -yq
+## }}}
+
+## {{{ target: clear-apt-lists
+.PHONY: clear-apt-lists
+clear-apt-lists:
+	rm -f /var/lib/apt/lists/*_{Contents,Index,InRelease,Packages,Sources,Translation}*
+## }}}
+
+##
+# vim: ts=8 sw=8 noet fdm=marker :
+##
