@@ -8,7 +8,7 @@ export PATH="/sbin:/usr/sbin:$PATH"
 
 # Option defaults
 opt_help=0
-opt_ipv4=1
+opt_ipv4=0
 opt_ipv6=0
 opt_mangle=0
 opt_raw=0
@@ -35,11 +35,22 @@ function list_tables()
     esac
   done
 
-  for table in $tables
-  do
-    echo -e "\n>>> iptables -vnL -t $table\n"
-    iptables -vnL -t $table |sed 's,^,    ,g'
-  done
+  if [[ $opt_ipv4 -eq 1 ]]
+  then
+    for table in $tables
+    do
+      echo -e "\n>>> iptables -vnL -t $table\n"
+      iptables -vnL -t $table |sed 's,^,    ,g'
+    done
+  fi
+  if [[ $opt_ipv6 -eq 1 ]]
+  then
+    for table in $tables
+    do
+      echo -e "\n>>> ip6tables -vnL -t $table\n"
+      ip6tables -vnL -t $table |sed 's,^,    ,g'
+    done
+  fi
 
   return 0
 }
@@ -91,6 +102,8 @@ function main()
       esac
     done
   fi
+
+  [[ $((opt_ipv4 + opt_ipv6)) -eq 0 ]] && opt_ipv4=1
 
   list_tables
   return $?
