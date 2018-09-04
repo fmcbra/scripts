@@ -18,6 +18,9 @@ do
   sleep 10
 done
 
-sync; sync; shutdown -h now
+rm -f /zero
+
+sync
+shutdown -h now
 
 ## vim: ts=2 sw=2 et fdm=marker :
