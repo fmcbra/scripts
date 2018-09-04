@@ -2,14 +2,14 @@
 
 export PATH=/com/scripts/bin:$PATH
 
-# Zero a number of log files under /var/log
+# Wipe a number of log files under /var/log
 wipe-var-log
 
 # Clear out any downloaded .deb files under /var/cache
 apt-get clean
 
-# Zero freespace
-dd if=/dev/zero of=/zero >/dev/null 2>&1 &
+# Wipe freespace
+dd if=/dev/zero of=/zero &
 while :
 do
   pid=$(pidof dd 2>/dev/null)
@@ -18,6 +18,6 @@ do
   sleep 10
 done
 
-sync; sync; reboot
+sync; sync; shutdown -h now
 
 ## vim: ts=2 sw=2 et fdm=marker :
