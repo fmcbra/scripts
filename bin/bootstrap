@@ -73,7 +73,6 @@ PKG_PURGE =          \
 
 ## {{{ $(PKG_DEPS)
 PKG_DEPS =      \
-  btrfs-tools   \
   cdebootstrap  \
   debootstrap   \
   curl          \
@@ -82,7 +81,8 @@ PKG_DEPS =      \
   make          \
   ncdu          \
   parted        \
-  psmisc
+  psmisc        \
+  xfsprogs
 ## }}}
 
 ifeq ($(CLOUD_AZURE), 1)
