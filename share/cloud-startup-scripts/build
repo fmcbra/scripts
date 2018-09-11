@@ -30,6 +30,10 @@ mkdir -p /com
 git clone https://github.com/fmcbra/scripts /com/scripts
 export PATH="/com/scripts/bin:$PATH"
 
+# Clone kernel-builder repo and install
+git clone https://github.com/fmcbra/kernel-builder ~/kernel-builder && \
+  make -C ~/kernel-builder install
+
 # Execute bootstrap script
 cd / && bootstrap                     \
   LOCAL_HOST=build-1                  \
