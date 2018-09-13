@@ -32,6 +32,7 @@ do
 done
 
 if [[ $clear_journal -eq 1 ]]
+then
   echo ">> Clearing $ROOT/var/log/journal/"
   rm -rf $ROOT/var/log/journal/*
 fi
