@@ -16,14 +16,24 @@ do
   : > $log
 done
 
+clear_journal=0
 while [[ $# -gt 0 ]]
 do
-  case "$1" in
+  arg="$1"
+  shift
+
+  case "$arg" in
     --journal)
-      echo ">> Clearing $ROOT/var/log/journal/"
-      rm -rf $ROOT/var/log/journal/*
+      clear_journal=1
+      ;;
+    *)
       ;;
   esac
 done
+
+if [[ $clear_journal -eq 1 ]]
+  echo ">> Clearing $ROOT/var/log/journal/"
+  rm -rf $ROOT/var/log/journal/*
+fi
 
 ## vim: ts=2 sw=2 et fdm=marker :
