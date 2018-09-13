@@ -78,6 +78,7 @@ PKG_DEPS =      \
   curl          \
   git           \
   less          \
+  lvm2          \
   make          \
   ncdu          \
   parted        \
