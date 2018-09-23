@@ -144,15 +144,8 @@ BOOTSZ=256M
 SWAPSZ=1024M
 NFSCSZ=256M
 
-if ! [[ -e $DEV ]]
-then
-  echo >&2 "$(basename "$0"): error: device $DEV does not exist"
-  exit 1
-elif ! [[ -b $DEV ]]
-then
-  echo >&2 "$(basename "$0"): error: $DEV is not a block device"
-  exit 1
-fi
+[[ -e $DEV ]] || die "device '$DEV' does not exist"
+[[ -b $DEV ]] || die "file '$DEV' is not a block device"
 
 # Wipe drive
 wipe_drive
