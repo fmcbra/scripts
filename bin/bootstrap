@@ -267,8 +267,8 @@ format-pool:
 ## }}}
 
 ## {{{ target: chroot-install
-.PHONY: install-chroot
-install-chroot: partition-disk fs-create fs-format fs-mount chroot-debootstrap chroot-install-bashrc
+.PHONY: chroot-install
+chroot-install: partition-disk fs-create fs-format fs-mount chroot-debootstrap chroot-install-bashrc
 	cp -a /com $(ROOT_MNT)/
 	cp /var/lib/bootstrap.env $(ROOT_MNT)/var/lib/
 	$(CHROOT_CMD) 'apt-get install $(PKG_DEPS)'
