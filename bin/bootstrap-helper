@@ -74,6 +74,13 @@ case "$cmd" in
     exec unshare --uts chroot $ROOT_MNT /bin/bash
     die "exec filed"
     ;;
+  chroot-cmd)
+    [[ $# -eq 1 ]] || die "Usage: $SCRIPT_NAME chroot-cmd <cmd>"
+    export LANG=C.UTF-8
+    export HOME=$HOME
+    exec unshare --uts chroot $ROOT_MNT /bin/bash -c "$1"
+    die "exec filed"
+    ;;
   *)
     die "invalid command '$cmd'"
     ;;
