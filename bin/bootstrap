@@ -203,6 +203,12 @@ install-root-gitconfig:
 	git config --global user.email root@$(LOCAL_HOST).$(LOCAL_DOMAIN)
 ## }}}
 
+## {{{ target: partition-disk
+.PHONY: partition-disk
+partition-disk:
+	autopart $(ROOT_DEV)
+## }}}
+
 ## {{{ target: install-ksm-preload
 .PHONY: install-ksm-preload
 install-ksm-preload:
