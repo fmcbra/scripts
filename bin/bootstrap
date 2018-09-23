@@ -62,6 +62,8 @@ KEYCHAIN_URL = https://github.com/funtoo/keychain/archive/$(KEYCHAIN_VERSION).ta
 
 APT_MIRROR = $(shell grep '^deb .*' /etc/apt/sources.list |head -n1 |awk '{print $$2}')
 
+CHROOT_CMD = bootstrap-helper chroot-cmd
+
 ## {{{ $(PKG_PURGE)
 PKG_PURGE =          \
   chrony             \
@@ -266,9 +268,10 @@ format-pool:
 
 ## {{{ target: chroot-install
 .PHONY: install-chroot
-install-chroot: chroot-debootstrap chroot-install-bashrc
+install-chroot: partition-disk fs-create fs-format fs-mount chroot-debootstrap chroot-install-bashrc
 	cp -a /com $(ROOT_MNT)/
 	cp /var/lib/bootstrap.env $(ROOT_MNT)/var/lib/
+	$(CHROOT_CMD) 'apt-get install $(PKG_DEPS)'
 ## }}}
 
 ## {{{ target: chroot-debootstrap
