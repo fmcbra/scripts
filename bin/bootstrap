@@ -215,7 +215,7 @@ create-filesystems: format-filesystems
 	mkdir -p $(ROOT_MNT) $(POOL_MNT)
 	mount LABEL=pool $(POOL_MNT)
 	for v in root data home snap; do btrfs subvolume create $(POOL_MNT)/$$v; done
-	umount $POOL_MNT
+	umount $(POOL_MNT)
 ## }}}
 
 ## {{{ target: format-filesystems
