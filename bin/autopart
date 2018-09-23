@@ -34,7 +34,7 @@ function wipe_drive()
   local c=
   for c in o w
   do
-    sleep 0.5
+    sleep 0.1
     echo "$c"
   done | fdisk "$DEV" >/dev/null 2>&1
 
