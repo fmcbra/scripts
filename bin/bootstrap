@@ -238,9 +238,9 @@ fs-mount:
 	chmod 0750 $(ROOT_MNT)/snap
 ## }}}
 
-## {{{ target: install-chroot
+## {{{ target: chroot-install
 .PHONY: install-chroot
-install-chroot: chroot-debootstrap install-chroot-bashrc
+install-chroot: chroot-debootstrap chroot-install-bashrc
 	cp /var/lib/bootstrap.env $(ROOT_MNT)/var/lib/
 ## }}}
 
@@ -250,9 +250,9 @@ chroot-debootstrap:
 	debootstrap --arch amd64 buster $(ROOT_MNT) $(APT_MIRROR)
 ## }}}
 
-## {{{ target: install-chroot-bashrc
-.PHONY: install-chroot-bashrc
-install-chroot-bashrc:
+## {{{ target: chroot-install-bashrc
+.PHONY: chroot-install-bashrc
+chroot-install-bashrc:
 	cp $(ROOT_MNT)/etc/bash.bashrc{,.system}
 	cp $(ROOT_MNT)/etc/bash.bashrc{,.chroot}
 	echo -e "\nsource /var/lib/bootstrap.env" >> $(ROOT_MNT)/etc/bash.bashrc.chroot
