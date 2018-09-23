@@ -217,7 +217,7 @@ format-filesystems: format-boot format-swap
 ## {{{ target: format-boot
 .PHONY: format-boot
 format-boot:
-	mkfs -t ext4 -f -L boot $(ROOT_DEV)1
+	mkfs -t ext4 -F -L boot $(ROOT_DEV)1
 ## }}}
 
 ## {{{ target: format-swap
