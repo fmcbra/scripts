@@ -57,6 +57,8 @@ KSM_PRELOAD_URL = https://s3.eu-west-2.amazonaws.com/dtadm-public/ksm_preload.ta
 KEYCHAIN_VERSION = 2.8.5
 KEYCHAIN_URL = https://github.com/funtoo/keychain/archive/$(KEYCHAIN_VERSION).tar.gz
 
+APT_MIRROR = $(shell grep '^deb .*' /etc/apt/sources.list |head -n1 |awk '{print $$2}')
+
 ## {{{ $(PKG_PURGE)
 PKG_PURGE =          \
   chrony             \
@@ -231,6 +233,12 @@ mount-filesystems:
 	mount LABEL=boot $(ROOT_MNT)/boot
 	for v in data home snap; do mkdir -p $(ROOT_MNT)/$$v && mount -o subvol=$$v LABEL=pool $(ROOT_MNT)/$$v; done
 	chmod 0750 $(ROOT_MNT)/snap
+## }}}
+
+## {{{ target: install-chroot
+.PHONY: install-chroot
+install-chroot:
+	debootstrap --arch amd64 buster $(ROOT_MNT) $(APT_MIRROR)
 ## }}}
 
 ## {{{ target: format-boot
