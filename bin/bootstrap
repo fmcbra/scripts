@@ -267,6 +267,7 @@ format-pool:
 ## {{{ target: chroot-install
 .PHONY: install-chroot
 install-chroot: chroot-debootstrap chroot-install-bashrc
+	cp -a /com $(ROOT_MNT)/
 	cp /var/lib/bootstrap.env $(ROOT_MNT)/var/lib/
 ## }}}
 
