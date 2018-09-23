@@ -240,13 +240,13 @@ fs-mount:
 
 ## {{{ target: install-chroot
 .PHONY: install-chroot
-install-chroot: debootstrap-chroot install-chroot-bashrc
+install-chroot: chroot-debootstrap install-chroot-bashrc
 	cp /var/lib/bootstrap.env $(ROOT_MNT)/var/lib/
 ## }}}
 
-## {{{ target: debootstrap-chroot
-.PHONY: debootstrap-chroot
-debootstrap-chroot:
+## {{{ target: chroot-debootstrap
+.PHONY: chroot-debootstrap
+chroot-debootstrap:
 	debootstrap --arch amd64 buster $(ROOT_MNT) $(APT_MIRROR)
 ## }}}
 
