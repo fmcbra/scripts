@@ -240,14 +240,24 @@ mount-filesystems:
 
 ## {{{ target: install-chroot
 .PHONY: install-chroot
-install-chroot:
+install-chroot: debootstrap-chroot install-chroot-bashrc
+	cp /var/lib/bootstrap.env $(ROOT_MNT)/var/lib/
+## }}}
+
+## {{{ target: debootstrap-chroot
+.PHONY: debootstrap-chroot
+debootstrap-chroot:
 	debootstrap --arch amd64 buster $(ROOT_MNT) $(APT_MIRROR)
+## }}}
+
+## {{{ target: install-chroot-bashrc
+.PHONY: install-chroot-bashrc
+install-chroot-bashrc:
 	cp $(ROOT_MNT)/etc/bash.bashrc{,.system}
 	cp $(ROOT_MNT)/etc/bash.bashrc{,.chroot}
 	echo -e "\nsource /var/lib/bootstrap.env" >> $(ROOT_MNT)/etc/bash.bashrc.chroot
 	echo -e '\nhostname $$INET_FQDN' >> $(ROOT_MNT)/etc/bash.bashrc.chroot
 	mv -f $(ROOT_MNT)/etc/bash.bashrc{.chroot,}
-	cp /var/lib/bootstrap.env $(ROOT_MNT)/var/lib/
 ## }}}
 
 ## {{{ target: mount-chroot
