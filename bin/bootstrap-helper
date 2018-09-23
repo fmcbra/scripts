@@ -67,6 +67,7 @@ case "$cmd" in
     export HOME=$HOME
     exec unshare --uts chroot $ROOT_MNT /bin/bash
     die "exec filed"
+    ;;
   *)
     die "invalid command '$cmd'"
     ;;
