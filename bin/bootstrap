@@ -223,6 +223,16 @@ create-filesystems: format-filesystems
 format-filesystems: format-boot format-swap
 ## }}}
 
+## {{{ target: mount-filesystems
+.PHONY: mount-filesystems
+mount-filesystems:
+	mount -o subvol=root LABEL=pool $(ROOT_MNT)
+	mkdir -p $(ROOT_MNT)/boot
+	mount LABEL=boot $(ROOT_MNT)/boot
+	for v in data home snap; do mkdir -p $(ROOT_MNT)/$$v && mount -o subvol=$$v LABEL=pool $(ROOT_MNT)/$$v; done
+	chmod 0750 $(ROOT_MNT)/snap
+## }}}
+
 ## {{{ target: format-boot
 .PHONY: format-boot
 format-boot:
