@@ -193,8 +193,7 @@ install-root-home:
 	curl $(SSH_PUBKEYS_URL) > /root/.ssh/authorized_keys
 	chmod 0600 /root/.ssh/authorized_keys
 	git clone $(DOTFILES_GIT_URL) /root/.dotfiles
-	cd /root/.dotfiles && git submodule update --init --recursive
-	cd /root && for dotfile in .dotfiles/.[a-z]*; do ln -sfn $$dotfile; done
+	make -C /root/.dotfiles
 ## }}}
 
 ## {{{ target: install-root-gitconfig
