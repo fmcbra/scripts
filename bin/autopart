@@ -3,8 +3,8 @@
 readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
 source "$LIB_PATH"/functions.bash || exit 1
 
-## {{{ function zero_rdev_super(dev, mb) { ... }
-function zero_rdev_super()
+## {{{ function zero_fs_sig(dev, mb) { ... }
+function zero_fs_sig()
 {
   local dev="$1"
   local mb="$2"
@@ -24,10 +24,10 @@ function wipe_drive()
   for d in "$DEV"*
   do
     [[ $d == $DEV ]] && continue
-    zero_rdev_super $d 16
+    zero_fs_sig $d 16
   done
 
-  zero_rdev_super "$DEV" 16
+  zero_fs_sig "$DEV" 16
 
   echo ">> Creating new empty msdos disk label"
 
