@@ -214,23 +214,23 @@ partition-disk:
 	autopart $(ROOT_DEV)
 ## }}}
 
-## {{{ target: create-filesystems
-.PHONY: create-filesystems
-create-filesystems: format-filesystems
+## {{{ target: fs-create
+.PHONY: fs-create
+fs-create: fs-format
 	mkdir -p $(ROOT_MNT) $(POOL_MNT)
 	mount LABEL=pool $(POOL_MNT)
 	for v in root data home snap; do btrfs subvolume create $(POOL_MNT)/$$v; done
 	umount $(POOL_MNT)
 ## }}}
 
-## {{{ target: format-filesystems
-.PHONY: format-filesystems
-format-filesystems: format-boot format-swap format-fscache format-pool
+## {{{ target: fs-format
+.PHONY: fs-format
+fs-format: format-boot format-swap format-fscache format-pool
 ## }}}
 
-## {{{ target: mount-filesystems
-.PHONY: mount-filesystems
-mount-filesystems:
+## {{{ target: fs-mount
+.PHONY: fs-mount
+fs-mount:
 	mount -o subvol=root LABEL=pool $(ROOT_MNT)
 	mkdir -p $(ROOT_MNT)/boot
 	mount LABEL=boot $(ROOT_MNT)/boot
