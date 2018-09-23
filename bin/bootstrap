@@ -250,7 +250,7 @@ format-swap:
 ## {{{ target: format-fscache
 .PHONY: format-fscache
 format-fscache:
-	mkfs -t ext4 -f -L fscache $(ROOT_DEV)3
+	mkfs -t ext4 -F -L fscache $(ROOT_DEV)3
 ## }}}
 
 ## {{{ target: format-pool
