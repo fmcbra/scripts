@@ -11,6 +11,9 @@ endif
 SHELL = /bin/bash
 APT = bootstrap-helper apt-get
 
+BASH_ENV = /com/scripts/share/bootstrap.bashrc
+export BASH_ENV
+
 BOOTSTRAP_ENV = /var/lib/bootstrap.env
 -include $(BOOTSTRAP_ENV)
 
