@@ -10,6 +10,6 @@ do
   source $f
 done
 
-[[ -z $INET_FQDN ]] && hostname "$INET_FQDN"
+[[ -n $INET_FQDN ]] && hostname "$INET_FQDN"
 
 ## vim: ts=2 sw=2 et fdm=marker :
