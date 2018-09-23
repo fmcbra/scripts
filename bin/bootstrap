@@ -209,6 +209,37 @@ partition-disk:
 	autopart $(ROOT_DEV)
 ## }}}
 
+## {{{ target: format-filesystems
+.PHONY: format-filesystems
+format-filesystems: format-boot format-swap
+## }}}
+
+## {{{ target: format-boot
+.PHONY: format-boot
+format-boot:
+	mkfs -t ext4 -f -L boot $(ROOT_DEV)1
+## }}}
+
+## {{{ target: format-swap
+.PHONY: format-swap
+format-swap:
+	-swapoff $(ROOT_DEV)2
+	mkswap -f -L swap $(ROOT_DEV)2
+	swapon $(ROOT_DEV)2
+## }}}
+
+## {{{ target: format-fscache
+.PHONY: format-fscache
+format-fscache:
+	mkfs -t ext4 -f -L fscache $(ROOT_DEV)3
+## }}}
+
+## {{{ target: format-pool
+.PHONY: format-pool
+format-pool:
+	mkfs -t btrfs -f -L pool $(ROOT_DEV)4
+## }}}
+
 ## {{{ target: install-ksm-preload
 .PHONY: install-ksm-preload
 install-ksm-preload:
