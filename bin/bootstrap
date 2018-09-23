@@ -260,9 +260,9 @@ install-chroot-bashrc:
 	mv -f $(ROOT_MNT)/etc/bash.bashrc{.chroot,}
 ## }}}
 
-## {{{ target: mount-chroot
-.PHONY: mount-chroot
-mount-chroot:
+## {{{ target: chroot-mount
+.PHONY: chroot-mount
+chroot-mount:
 	mount --bind /dev $(ROOT_MNT)/dev
 	mount -t proc none $(ROOT_MNT)/proc
 	mount -t sysfs none $(ROOT_MNT)/sys
