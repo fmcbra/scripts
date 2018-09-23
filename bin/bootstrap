@@ -242,11 +242,11 @@ mount-filesystems:
 .PHONY: install-chroot
 install-chroot:
 	debootstrap --arch amd64 buster $(ROOT_MNT) $(APT_MIRROR)
-	cp /etc/bash.bashrc{,.system}
-	cp /etc/bash.bashrc{,.chroot}
-	echo -e "\nsource /var/lib/bootstrap.env" >> /etc/bash.bashrc.chroot
-	echo -e '\nhostname $$INET_FQDN' >> /etc/bash.bashrc.chroot
-	mv -f /etc/bash.bashrc{.chroot,}
+	cp $(ROOT_MNT)/etc/bash.bashrc{,.system}
+	cp $(ROOT_MNT)/etc/bash.bashrc{,.chroot}
+	echo -e "\nsource /var/lib/bootstrap.env" >> $(ROOT_MNT)/etc/bash.bashrc.chroot
+	echo -e '\nhostname $$INET_FQDN' >> $(ROOT_MNT)/etc/bash.bashrc.chroot
+	mv -f $(ROOT_MNT)/etc/bash.bashrc{.chroot,}
 ## }}}
 
 ## {{{ target: mount-chroot
