@@ -220,7 +220,7 @@ create-filesystems: format-filesystems
 
 ## {{{ target: format-filesystems
 .PHONY: format-filesystems
-format-filesystems: format-boot format-swap
+format-filesystems: format-boot format-swap format-fscache format-pool
 ## }}}
 
 ## {{{ target: mount-filesystems
