@@ -76,6 +76,7 @@ case "$cmd" in
     ;;
   chroot-cmd)
     [[ $# -eq 1 ]] || die "Usage: $SCRIPT_NAME chroot-cmd <cmd>"
+    export BASH_ENV=/com/scripts/share/bootstrap.bashrc
     export LANG=C.UTF-8
     export HOME=$HOME
     exec unshare --uts chroot $ROOT_MNT /bin/bash -c "$1"
