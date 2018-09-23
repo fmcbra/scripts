@@ -3,6 +3,12 @@
 readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
 source "$LIB_PATH"/functions.bash || exit 1
 
+for f in /var/lib/bootstrap.env
+do
+  [[ -e $f ]] || continue
+  source $f || die "$f: source failed"
+done
+
 function is_vm()
 {
   dmesg 2>&1 \
