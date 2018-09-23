@@ -62,6 +62,11 @@ case "$cmd" in
   cloud-is-azure)
     grep -q '^domain .*internal\.cloudapp\.net$' /etc/resolv.conf && exit 0 || exit 1
     ;;
+  chroot-shell)
+    export LANG=C.UTF-8
+    export HOME=$HOME
+    exec unshare --uts chroot $ROOT_MNT /bin/bash
+    die "exec filed"
   *)
     die "invalid command '$cmd'"
     ;;
