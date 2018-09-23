@@ -241,6 +241,16 @@ install-chroot:
 	debootstrap --arch amd64 buster $(ROOT_MNT) $(APT_MIRROR)
 ## }}}
 
+## {{{ target: mount-chroot
+.PHONY: mount-chroot
+mount-chroot:
+	mount --bind /dev $(ROOT_MNT)/dev
+	mount -t proc none $(ROOT_MNT)/proc
+	mount -t sysfs none $(ROOT_MNT)/sys
+	mkdir $(ROOT_MNT)/oldroot
+	mount --bind / $(ROOT_MNT)/oldroot
+## }}}
+
 ## {{{ target: format-boot
 .PHONY: format-boot
 format-boot:
