@@ -213,6 +213,7 @@ install-root-gitconfig:
 ## {{{ target: partition-disk
 .PHONY: partition-disk
 partition-disk:
+	-umount -a
 	autopart $(ROOT_DEV)
 ## }}}
 
