@@ -140,9 +140,9 @@ fi
 
 # Defaults
 DEV="$1"
-BOOTSZ=256M
+BOOTSZ=128M
 SWAPSZ=1024M
-NFSCSZ=256M
+NFSCSZ=384M
 
 [[ -e $DEV ]] || die "device '$DEV' does not exist"
 [[ -b $DEV ]] || die "file '$DEV' is not a block device"
