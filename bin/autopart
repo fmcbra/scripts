@@ -91,8 +91,8 @@ function create_swap_part()
 }
 ## }}}
 
-## {{{ function create_nfsc_part() { ... }
-function create_nfsc_part()
+## {{{ function create_fscache_part() { ... }
+function create_fscache_part()
 {
   echo ">> Creating NFS/FS-Cache partition"
 
@@ -152,7 +152,7 @@ wipe_drive
 
 create_boot_part
 create_swap_part
-[[ -n $NFSCSZ ]] && create_nfsc_part
+[[ -n $NFSCSZ ]] && create_fscache_part
 create_root_part
 
 echo
