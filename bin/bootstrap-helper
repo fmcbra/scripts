@@ -69,7 +69,6 @@ case "$cmd" in
     grep -q '^domain .*internal\.cloudapp\.net$' /etc/resolv.conf && exit 0 || exit 1
     ;;
   chroot-shell)
-    export BASH_ENV=/com/scripts/share/bootstrap.bashrc
     export LANG=C.UTF-8
     export HOME=$HOME
     exec unshare --uts chroot $ROOT_MNT /bin/bash
