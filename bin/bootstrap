@@ -272,7 +272,7 @@ format-pool:
 chroot-install: partition-disk fs-create fs-format fs-mount chroot-debootstrap chroot-install-bashrc
 	cp -a /com $(ROOT_MNT)/
 	cp /var/lib/bootstrap.env $(ROOT_MNT)/var/lib/
-	$(CHROOT_CMD) 'apt-get install $(PKG_DEPS)'
+	$(CHROOT_CMD) 'bootstrap chroot-install-packages'
 ## }}}
 
 ## {{{ target: chroot-debootstrap
@@ -289,6 +289,12 @@ chroot-install-bashrc:
 	echo -e "\nsource /var/lib/bootstrap.env" >> $(ROOT_MNT)/etc/bash.bashrc.chroot
 	echo -e '\nhostname $$INET_FQDN' >> $(ROOT_MNT)/etc/bash.bashrc.chroot
 	mv -f $(ROOT_MNT)/etc/bash.bashrc{.chroot,}
+## }}}
+
+## {{{ target: chroot-install-packages
+.PHONY: chroot-install-packages
+chroot-install-packages:
+	$(APT) install $(PKG_DEPS)
 ## }}}
 
 ## {{{ target: chroot-mount
