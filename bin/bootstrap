@@ -93,6 +93,46 @@ PKG_DEPS =      \
   psmisc
 ## }}}
 
+## {{{ $(PKG_CORE)
+PKG_CORE =               \
+  console-setup          \
+  keyboard-configuration \
+  locales                \
+  make
+## }}}
+
+## {{{ $(PKG_EXTRA)
+PKG_EXTRA =         \
+  acl               \
+  apt-file          \
+  auditd            \
+  bash-completion   \
+  bind9-host        \
+  cachefilesd       \
+  command-not-found \
+  diffutils         \
+  grub-pc           \
+  linux-image-amd64 \
+  logwatch          \
+  multitail         \
+  mutt              \
+  ncurses-term      \
+  net-tools         \
+  nfs-common        \
+  openssh-server    \
+  patch             \
+  postfix           \
+  procmail          \
+  rpcbind           \
+  screen            \
+  sudo              \
+  tasksel           \
+  tig xfsprogs      \
+  vim               \
+  vim-scripts       \
+  xz-utils
+## }}}
+
 ifeq ($(CLOUD_AZURE), 1)
   PKG_DEPS += waagent
 endif
@@ -295,7 +335,10 @@ chroot-install-bashrc:
 ## {{{ target: chroot-install-packages
 .PHONY: chroot-install-packages
 chroot-install-packages:
+	$(APT) update
+	$(APT) install $(PKG_CORE)
 	$(APT) install $(PKG_DEPS)
+	$(APT) install $(PKG_EXTRA)
 ## }}}
 
 ## {{{ target: chroot-mount
