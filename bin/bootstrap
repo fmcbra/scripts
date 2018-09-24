@@ -272,6 +272,7 @@ format-pool:
 chroot-install: partition-disk fs-create fs-format fs-mount chroot-debootstrap chroot-install-bashrc
 	cp -a /com $(ROOT_MNT)/
 	cp /var/lib/bootstrap.env $(ROOT_MNT)/var/lib/
+	$(CHROOT_CMD) 'apt-get install make'
 	$(CHROOT_CMD) 'bootstrap chroot-install-packages'
 ## }}}
 
