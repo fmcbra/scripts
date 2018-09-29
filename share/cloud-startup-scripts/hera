@@ -30,7 +30,7 @@ apt-get -yq ${apt_opts[@]} update
 apt-get -yq ${apt_opts[@]} install git make
 
 # Clone cloud-boot git repo and install to /usr/local
-git clone -b cloud-boot https://github.com/fmcbra/cloud-boot ~/cloud-boot
+git clone -b dev https://github.com/fmcbra/cloud-boot ~/cloud-boot
 make -C ~/cloud-boot all install
 
 # Initialise cloud-boot
