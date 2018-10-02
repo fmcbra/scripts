@@ -1,0 +1,54 @@
+#!/usr/bin/env python
+
+import os
+import sys
+
+CONFIG_LOCAL_DIR  = '/config/local'
+CONFIG_GLOBAL_DIR = '/config/global'
+
+def config_scan(path):
+  config_dirs = []
+  config_files = []
+
+  for root, dirs, files in os.walk(path, topdown=True):
+    for f in files:
+      f_abs = os.path.join(root, f)
+      if os.path.sep + os.path.join('.git', '') not in f_abs:
+        config_files += [os.path.join(root, f)]
+
+  for f in config_files:
+    d = os.path.dirname(f)
+    if d not in config_dirs:
+      config_dirs += [d]
+
+  return config_dirs, config_files
+
+def create_directories(root, dirs):
+  n = len(root) + 1
+  for d in dirs:
+    rel = d[n:]
+    if os.path.isdir('/' + rel):
+      continue
+    os.mkdir('/' + d, 0755)
+
+def create_symlinks(root, files):
+  n = len(root) + 1
+  for f in files:
+    rel = f[n:]
+    if os.path.exists('/' + rel):
+      os.unlink('/' + rel)
+    os.symlink(f, '/' + rel)
+
+def main():
+  for config_root in [CONFIG_LOCAL_DIR, CONFIG_GLOBAL_DIR]:
+    config_dirs, config_files = config_scan(config_root)
+    create_directories(config_root, config_dirs)
+    create_symlinks(config_root, config_files)
+    os.system('restorecon -R -v ' + config_root)
+
+if __name__ == '__main__':
+  exit(main())
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##
