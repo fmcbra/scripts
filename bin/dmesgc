@@ -86,6 +86,9 @@ sub ignore_msg
 {
   my $msg = shift;
 
+  # Annoyingly long (usually systemd) messages
+  return 1 if $msg =~ /^systemd.*: systemd \d+ running in system mode/;
+
   # mount.cifs warning that more secure SMBv2.x used in place of SMBv1
   return 1 if $msg =~ /^No dialect specified.*more secure dialect.*SMB/;
 
