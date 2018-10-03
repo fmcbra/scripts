@@ -3,8 +3,9 @@
 import os
 import sys
 
-CONFIG_LOCAL_DIR  = '/config/local'
-CONFIG_GLOBAL_DIR = '/config/global'
+CONFIG_ROOT = '/config'
+CONFIG_LOCAL_DIR  = CONFIG_ROOT + '/local'
+CONFIG_GLOBAL_DIR = CONFIG_ROOT + '/global'
 
 def config_scan(path):
   config_dirs = []
@@ -39,12 +40,27 @@ def create_symlinks(root, files):
       os.unlink('/' + rel)
     os.symlink(f, '/' + rel)
 
+## {{{ path_prog()
+def path_prog(name):
+  for d in os.environ['PATH'].split(':'):
+    name_path = os.path.join(d, name)
+    if not os.path.exists(os.path.join(d, name)):
+      continue
+    return name_path
+
+  return None
+## }}}
+
 def main():
+  restorecon = path_prog('restorecon')
+
   for config_root in [CONFIG_LOCAL_DIR, CONFIG_GLOBAL_DIR]:
     config_dirs, config_files = config_scan(config_root)
     create_directories(config_root, config_dirs)
     create_symlinks(config_root, config_files)
-    os.system('restorecon -R -v ' + config_root)
+
+  if restorecon:
+    os.system('%s -R -v %s' % (restorecon, CONFIG_ROOT))
 
 if __name__ == '__main__':
   exit(main())
