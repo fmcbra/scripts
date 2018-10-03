@@ -30,7 +30,7 @@ def create_directories(root, dirs):
     rel = d[n:]
     if os.path.isdir('/' + rel):
       continue
-    os.mkdir('/' + d, 0755)
+    os.mkdir('/' + rel, 0755)
 
 def create_symlinks(root, files):
   n = len(root) + 1
