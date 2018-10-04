@@ -1,0 +1,84 @@
+#!/usr/bin/env python
+
+import os
+import sys
+
+import hashlib
+
+CONFIG_ROOT = '/config'
+CONFIG_LOCAL_DIR  = CONFIG_ROOT + '/local'
+CONFIG_GLOBAL_DIR = CONFIG_ROOT + '/global'
+
+## {{{ config_scan()
+def config_scan(path):
+  config_dirs = []
+  config_files = []
+
+  for root, dirs, files in os.walk(path, topdown=True):
+    for f in files:
+      f_abs = os.path.join(root, f)
+      if os.path.sep + os.path.join('.git', '') not in f_abs:
+        config_files += [os.path.join(root, f)]
+
+  for f in config_files:
+    d = os.path.dirname(f)
+    if d not in config_dirs:
+      config_dirs += [d]
+
+  return config_dirs, config_files
+## }}}
+
+## {{{ create_directories()
+def create_directories(root, dirs):
+  n = len(root) + 1
+  for d in dirs:
+    rel = d[n:]
+    if os.path.isdir('/' + rel):
+      continue
+    os.mkdir('/' + rel, 0755)
+## }}}
+
+## {{{ create_reflinks()
+def create_reflinks(root, files):
+  n = len(root) + 1
+  for f in files:
+    rel = f[n:]
+    dest = '/' + rel
+    if os.path.isfile(dest):
+      os.unlink(dest)
+    rc = os.system('cp --reflink=always %s %s' % (f, dest))
+    if rc == 0:
+      continue
+    print 'warning: %s: cp --reflink failed' % dest
+## }}}
+
+## {{{ path_prog()
+def path_prog(name):
+  for d in os.environ['PATH'].split(':'):
+    name_path = os.path.join(d, name)
+    if not os.path.exists(os.path.join(d, name)):
+      continue
+    return name_path
+
+  return None
+## }}}
+
+## {{{ main()
+def main():
+  restorecon = path_prog('restorecon')
+
+  for config_root in [CONFIG_LOCAL_DIR, CONFIG_GLOBAL_DIR]:
+    config_dirs, config_files = config_scan(config_root)
+    create_directories(config_root, config_dirs)
+    create_reflinks(config_root, config_files)
+
+  if restorecon:
+    os.system('%s -R -v %s' % (restorecon, CONFIG_ROOT))
+## }}}
+
+if __name__ == '__main__':
+  exit(main())
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##
