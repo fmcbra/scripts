@@ -7,6 +7,7 @@ CONFIG_ROOT = '/config'
 CONFIG_LOCAL_DIR  = CONFIG_ROOT + '/local'
 CONFIG_GLOBAL_DIR = CONFIG_ROOT + '/global'
 
+## {{{ config_scan()
 def config_scan(path):
   config_dirs = []
   config_files = []
@@ -23,7 +24,9 @@ def config_scan(path):
       config_dirs += [d]
 
   return config_dirs, config_files
+## }}}
 
+## {{{ create_directories()
 def create_directories(root, dirs):
   n = len(root) + 1
   for d in dirs:
@@ -31,7 +34,9 @@ def create_directories(root, dirs):
     if os.path.isdir('/' + rel):
       continue
     os.mkdir('/' + rel, 0755)
+## }}}
 
+## {{{ create_symlinks()
 def create_symlinks(root, files):
   n = len(root) + 1
   for f in files:
@@ -39,6 +44,7 @@ def create_symlinks(root, files):
     if os.path.exists('/' + rel):
       os.unlink('/' + rel)
     os.symlink(f, '/' + rel)
+## }}}
 
 ## {{{ path_prog()
 def path_prog(name):
@@ -51,6 +57,7 @@ def path_prog(name):
   return None
 ## }}}
 
+## {{{ main()
 def main():
   restorecon = path_prog('restorecon')
 
@@ -61,6 +68,7 @@ def main():
 
   if restorecon:
     os.system('%s -R -v %s' % (restorecon, CONFIG_ROOT))
+## }}}
 
 if __name__ == '__main__':
   exit(main())
