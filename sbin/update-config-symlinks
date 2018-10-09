@@ -42,7 +42,7 @@ def create_symlinks(root, files):
   for f in files:
     rel = f[n:]
     dest = '/' + rel
-    if os.path.exists(dest):
+    if os.path.isfile(dest):
       os.unlink(dest)
     os.symlink(f, dest)
 ## }}}
