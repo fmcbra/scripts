@@ -3,8 +3,6 @@
 import os
 import sys
 
-import hashlib
-
 CONFIG_ROOT = '/config'
 CONFIG_LOCAL_DIR  = CONFIG_ROOT + '/local'
 CONFIG_GLOBAL_DIR = CONFIG_ROOT + '/global'
