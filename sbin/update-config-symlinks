@@ -41,9 +41,10 @@ def create_symlinks(root, files):
   n = len(root) + 1
   for f in files:
     rel = f[n:]
-    if os.path.exists('/' + rel):
-      os.unlink('/' + rel)
-    os.symlink(f, '/' + rel)
+    dest = '/' + rel
+    if os.path.exists(dest)
+      os.unlink(dest)
+    os.symlink(f, dest)
 ## }}}
 
 ## {{{ path_prog()
