@@ -69,7 +69,7 @@ sub format_msg
   #   comm="systemd-tmpfile" name="config" dev="dm-0" ino=33735509 \
   #   scontext=system_u:system_r:systemd_tmpfiles_t:s0 \
   #   tcontext=system_u:object_r:default_t:s0 tclass=file permissive=1
-  elsif ($msg =~ /^audit:.*audit\(.*\): avc:  denied  \{ ([^ ]+) for (.*)$/)
+  elsif ($msg =~ /^audit: .* avc:\s+denied\s+\{ ([^ ]+) \} for (.*)$/)
   {
     my $op = $1;
     my $info = $2;
