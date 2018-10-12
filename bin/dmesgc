@@ -73,6 +73,7 @@ sub format_msg
   {
     my $op = $1;
     my $info = $2;
+    $info =~ s/\s+/ /;
     $msg = sprintf "avc: %sdenied%s { %s } for %s", color('red'), color('reset'), $op, $info;
   }
 
