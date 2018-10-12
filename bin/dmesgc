@@ -65,6 +65,17 @@ sub format_msg
     }
   }
 
+  # [00000010.74] audit: type=1400 audit(1539307663.616:52): avc:  denied  { read } for  pid=674 \
+  #   comm="systemd-tmpfile" name="config" dev="dm-0" ino=33735509 \
+  #   scontext=system_u:system_r:systemd_tmpfiles_t:s0 \
+  #   tcontext=system_u:object_r:default_t:s0 tclass=file permissive=1
+  elsif ($msg =~ /^audit:.*audit\(.*\): avc:  denied  \{ ([^ ]+) for (.*)$/)
+  {
+    my $op = $1;
+    my $info = $2;
+    $msg = sprintf "avc: %sdenied%s { %s } for %s", color('red'), color('reset'), $op, $info;
+  }
+
   return $msg;
 }
 
