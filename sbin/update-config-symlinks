@@ -6,6 +6,7 @@ import sys
 CONFIG_ROOT = '/config'
 CONFIG_LOCAL_DIR  = CONFIG_ROOT + '/local'
 CONFIG_GLOBAL_DIR = CONFIG_ROOT + '/global'
+CONFIG_DIRS = [CONFIG_GLOBAL_DIR, CONFIG_LOCAL_DIR]
 
 ## {{{ config_scan()
 def config_scan(path):
@@ -62,7 +63,7 @@ def path_prog(name):
 def main():
   restorecon = path_prog('restorecon')
 
-  for config_root in [CONFIG_LOCAL_DIR, CONFIG_GLOBAL_DIR]:
+  for config_root in CONFIG_DIRS:
     config_dirs, config_files = config_scan(config_root)
     create_directories(config_root, config_dirs)
     create_symlinks(config_root, config_files)
