@@ -1,0 +1,29 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+function die()
+{
+  echo >&2 "$SCRIPT_NAME: error:" "$@"
+  exit 1
+}
+
+if [[ $1 == --watch ]]
+then
+  vgs
+  echo
+
+  lvs
+  echo
+
+  df -h $(mount |grep '^/dev/mapper/.* on' |awk '{print $3}')
+  echo
+
+  exit 0
+fi
+
+exec watch -n30 -d $0 --watch
+die "exec failed"
+
+## vim: ts=2 sw=2 et fdm=marker :
