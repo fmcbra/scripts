@@ -1,0 +1,51 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+function die()
+{
+  echo >&2 "$SCRIPT_NAME: error:" "$@"
+  exit 1
+}
+
+function s_mdraid()
+{
+  echo -en "MD/RAID\n\n"
+  grep -v ^unused < /proc/mdstat |sed 's/^/  /g'
+}
+
+function s_lvm()
+{
+  echo -en "LVM\n\n"
+  (vgs; echo; lvs; echo)
+}
+
+function s_usage()
+{
+  echo -en "USAGE\n\n"
+  mount \
+    |egrep '^/dev/(sd|mapper|md)' \
+    |awk '{print $3}' \
+    |xargs df -h -BG
+}
+
+function main()
+{
+  s_mdraid
+  s_lvm
+  s_usage
+
+  return 0
+}
+
+if [[ $1 == --watch ]]
+then
+  main "$@"
+  exit $?
+fi
+
+exec watch -n30 -d $0 --watch
+die "exec failed"
+
+## vim: ts=2 sw=2 et fdm=marker :
