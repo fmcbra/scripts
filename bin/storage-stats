@@ -20,6 +20,8 @@ function s_mdraid()
 
 function s_lvm()
 {
+  [[ -z $(type -P vgs) ]] && return
+
   echo -en "LVM\n\n"
   (vgs; echo; lvs; echo)
 }
