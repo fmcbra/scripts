@@ -1,0 +1,29 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+function die()
+{
+  echo >&2 "$SCRIPT_NAME: error:" "$@"
+  exit 1
+}
+
+DHCPD="$(type -P dhcpd)"
+[[ -z $DHCPD ]] && die "dhcpd not found in PATH"
+
+if [[ -f /etc/default/isc-dhcp-server ]]
+then
+  . /etc/default/isc-dhcp-server || exit 1
+fi
+
+DHCPD_CONF=${DHCPDv4_CONF:-/etc/dhcp/dhcpd.conf}
+
+out="$($DHCPD -t -cf "$DHCPD_CONF" 2>&1)"
+ret=$?
+[[ $ret -eq 0 ]] && exit 0
+
+echo >&2 "$out"
+exit 1
+
+## vim: ts=2 sw=2 et fdm=marker :
