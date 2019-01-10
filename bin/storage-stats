@@ -11,6 +11,9 @@ function die()
 
 function s_mdraid()
 {
+  [[ -e /proc/mdstat ]] || return
+  [[ $(wc -l < /proc/mdstat) -eq 2 ]] && return
+
   echo -en "MD/RAID\n\n"
   grep -v ^unused < /proc/mdstat |sed 's/^/  /g'
 }
