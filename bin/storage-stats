@@ -34,7 +34,7 @@ function s_usage()
   mount \
     |egrep '^/dev/(sd|mapper|md)' \
     |awk '{print $3}' \
-    |xargs echo df -h -B$UNITS
+    |xargs df -h -B$UNITS
 }
 
 function main()
