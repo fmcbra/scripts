@@ -3,6 +3,8 @@
 readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
 source "$LIB_PATH"/functions.bash || exit 1
 
+UNITS=G
+
 function die()
 {
   echo >&2 "$SCRIPT_NAME: error:" "$@"
@@ -32,11 +34,23 @@ function s_usage()
   mount \
     |egrep '^/dev/(sd|mapper|md)' \
     |awk '{print $3}' \
-    |xargs df -h -BG
+    |xargs echo df -h -B$UNITS
 }
 
 function main()
 {
+  while [[ $# -gt 0 ]]
+  do
+    local arg="$1"
+    shift
+
+    case "$arg" in
+      -G) export UNITS=G ;;
+      -M) export UNITS=M ;;
+      *)  ;;
+    esac
+  done
+
   s_mdraid
   s_lvm
   s_usage
@@ -46,11 +60,12 @@ function main()
 
 if [[ $1 == --watch ]]
 then
+  shift
   main "$@"
   exit $?
 fi
 
-exec watch -n30 -d $0 --watch
+exec watch -n30 -d $0 --watch "$@"
 die "exec failed"
 
 ## vim: ts=2 sw=2 et fdm=marker :
