@@ -38,8 +38,9 @@ sub format_msg
 {
   my ($msg) = @_;
 
-  # [00053200.52] Dropped packet: IN=wifi0 OUT= MAC=0c:d2:92:71:e1:a2:2c:fd:a1:cd:79:e8:08:00 \
-  #   SRC=192.168.1.254 DST=192.168.1.150 LEN=73 TOS=0x00 PREC=0x00 TTL=64 ID=0 DF PROTO=UDP \
+  # [00053200.52] Dropped packet: IN=wifi0 OUT= \
+  #   MAC=xx:xx:xx:xx:xx:xx:yy:yy:yy:yy:yy:yy:yy:yy SRC=192.168.1.254 \
+  #   DST=192.168.1.150 LEN=73 TOS=0x00 PREC=0x00 TTL=64 ID=0 DF PROTO=UDP \
   #   SPT=18018 DPT=46454 LEN=53
   if ($msg =~ /^Dropped packet: (.*)$/)
   {
@@ -65,16 +66,17 @@ sub format_msg
     }
   }
 
-  # [00000010.74] audit: type=1400 audit(1539307663.616:52): avc:  denied  { read } for  pid=674 \
-  #   comm="systemd-tmpfile" name="config" dev="dm-0" ino=33735509 \
-  #   scontext=system_u:system_r:systemd_tmpfiles_t:s0 \
+  # [00000010.74] audit: type=1400 audit(1539307663.616:52): avc:  denied \
+  #   { read } for  pid=674 comm="systemd-tmpfile" name="config" dev="dm-0" \
+  #   ino=33735509 scontext=system_u:system_r:systemd_tmpfiles_t:s0 \
   #   tcontext=system_u:object_r:default_t:s0 tclass=file permissive=1
   elsif ($msg =~ /^audit: .* avc:\s+denied\s+\{ ([^ ]+) \} for (.*)$/)
   {
     my $op = $1;
     my $info = $2;
     $info =~ s/\s+/ /;
-    $msg = sprintf "avc: %sdenied%s { %s } for %s", color('red'), color('reset'), $op, $info;
+    $msg = sprintf "avc: %sdenied%s { %s } for %s",
+      color('red'), color('reset'), $op, $info;
   }
 
   return $msg;
@@ -114,14 +116,16 @@ sub ignore_msg
 
   # audit: type=1130 audit(1525986113.897:108): pid=1 uid=0 auid=4294967295 \
   # ses=4294967295 subj=system_u:system_r:init_t:s0 \
-  # msg='unit=auditd comm="systemd" exe="/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+  # msg='unit=auditd comm="systemd" exe="/lib/systemd/systemd" hostname=? \
+  # addr=? terminal=? res=success'
   return 1 if $msg =~ /^audit: .* msg=.* res=success/;
 
-  # input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input0
+  # input: AT Translated Set 2 keyboard as /devices/...
   return 1 if $msg =~ /^input: .* as \/devices.*/;
 
-  # audit: type=1400 audit(1534803127.077:68): apparmor="STATUS" operation="profile_replace" \
-  # profile="unconfined" name="/usr/bin/evince//sanitized_helper" pid=7257 comm="apparmor_parser"
+  # audit: type=1400 audit(1534803127.077:68): apparmor="STATUS" \
+  # operation="profile_replace" profile="unconfined" \
+  # name="/usr/bin/evince//sanitized_helper" pid=7257 comm="apparmor_parser"
   return 1 if $msg =~ /^audit:.* apparmor=\"STATUS\"/;
 
   return 0;
