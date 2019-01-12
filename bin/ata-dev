@@ -9,7 +9,8 @@ ATA=
 ## {{{ function find_ata_dev()
 function find_ata_dev()
 {
-  local host=$(grep $ATA /sys/class/scsi_host/host*/unique_id |awk -F/ '{print $5}')
+  local unique_ids='/sys/class/scsi_host/host*/unique_id'
+  local host=$(grep $ATA $unique_ids |awk -F/ '{print $5}')
   ls -l /sys/block/sd* |grep $host |awk '{print $11}' |sed s,^..,/sys,
 }
 ## }}}
