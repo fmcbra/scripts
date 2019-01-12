@@ -9,14 +9,10 @@ use File::Basename qw(basename);
 use constant SCRIPT_NAME => basename($0);
 
 # Sample output:
-# $ arp-scan 10.{0..254}.0.0/24
+# $ arp-scan 10.2.0.0/24
 # Interface: eth0, datalink type: EN10MB (Ethernet)
-# Starting arp-scan 1.9.5 with 65280 hosts (https://github.com/royhills/arp-scan)
-# 10.2.0.1        54:bf:64:06:35:ee       (Unknown)
-# 10.3.0.1        b8:27:eb:83:f5:cd       Raspberry Pi Foundation
-# 10.5.0.1        b8:27:eb:d0:ce:67       Raspberry Pi Foundation
-# 10.3.0.1        b8:27:eb:83:f5:cd       Raspberry Pi Foundation (DUP: 2)
-# 10.3.0.1        b8:27:eb:83:f5:cd       Raspberry Pi Foundation (DUP: 3)
+# Starting arp-scan 1.9.5 with 256 hosts (https://github.com/royhills/arp-scan)
+# 10.2.0.1        xx:xx:xx:xx:xx:xx       (Unknown)
 
 ## {{{ datetime()
 sub datetime
@@ -45,8 +41,8 @@ sub datetime
 ## {{{ main()
 sub main
 {
-  # FIXME: check arguments passed to arp-scan to make sure they are actually IP address(es)
-  # or network addresses in CIDR format.
+  # FIXME: check arguments passed to arp-scan to make sure they are actually IP
+  # address(es) or network addresses in CIDR format.
   my $args = '';
   foreach my $arg (@ARGV)
   {
