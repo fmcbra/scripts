@@ -1,0 +1,46 @@
+#!/bin/bash
+
+readonly LIB_PATH="$(cd $(dirname "$0")/..; pwd)/lib"
+source "$LIB_PATH"/functions.bash || exit 1
+
+# ATA device to query
+ATA=
+
+## {{{ function find_ata_dev()
+function find_ata_dev()
+{
+  local host=$(grep $ATA /sys/class/scsi_host/host*/unique_id |awk -F/ '{print $5}')
+  ls -l /sys/block/sd* |grep $host |awk '{print $11}' |sed s,^..,/sys,
+}
+## }}}
+
+## {{{ function main()
+function main()
+{
+  if [[ $# -ne 1 ]]
+  then
+    echo >&2 "Usage: $SCRIPT_NAME <device number>"
+    exit 1
+  elif ! [[ $1 =~ ^[0-9]+$ ]]
+  then
+    echo >&2 "$SCRIPT_NAME: error: invalid ATA device number (got '$1')"
+    exit 1
+  fi
+
+  ATA=$1
+
+  local dev=$(find_ata_dev)
+  [[ -z $dev ]] && die "ATA device $ATA not found"
+
+  echo "/dev/${dev##*/}"
+
+  return 0
+}
+## }}}
+
+main "$@"
+exit $?
+
+##
+# vim: ts=2 sw=2 et fdm=marker :
+##
