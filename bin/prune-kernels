@@ -5,13 +5,13 @@ source "$LIB_PATH"/functions.bash || exit 1
 
 # Ensure required dependencies don't accidentally get removed on next
 # "apt-get autoremove"
-apt-get install initramfs-tools initramfs-tools-core klibc-utils libklibc linux-base \
-  || die "apt-get failed"
+apt-get install initramfs-tools initramfs-tools-core klibc-utils libklibc \
+  linux-base || die "apt-get failed"
 
-prune_kernels=$(dpkg -l |grep 'linux-image-[[:digit:]]' |tail -n -1 |awk '{print $2}')
-[[ -z $prune_kernels ]] && exit 0
+kernel=$(dpkg -l |grep 'linux-image-[[:digit:]]' |tail -n -1 |awk '{print $2}')
+[[ -z $kernel ]] && exit 0
 
-exec apt-get purge $prune_kernels "$@"
+exec apt-get purge $kernel "$@"
 die "apt-get: exec failed"
 
 ##
