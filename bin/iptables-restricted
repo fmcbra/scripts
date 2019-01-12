@@ -45,7 +45,7 @@ function _wrap()
 
   rm -f "$out_tmp"
 
-  echo >&2 "error: flushing iptables and setting default chain policies to ACCEPT"
+  echo >&2 "error: flushing iptables resetting default chain policies to ACCEPT"
   flush
 
   exit 1
