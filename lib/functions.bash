@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Make sure $SCRIPT_NAME is set appropriately
-SCRIPT_NAME="$(basename "$0")"
+SCRIPT_NAME="${0##*/}"
 
 function error()
 {
