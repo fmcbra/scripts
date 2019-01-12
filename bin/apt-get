@@ -5,7 +5,8 @@ source "$LIB_PATH"/functions.bash || exit 1
 
 function do_chattr()
 {
-  # n=srcpkgcache.bin; mv $n{,.old} && touch $n && chattr +C $n && cat $n.old > $n
+  # $ n=srcpkgcache.bin; \
+  # > mv $n{,.old} && touch $n && chattr +C $n && cat $n.old > $n
 
   local path="$1"
   local attr=$(lsattr "$path" |awk '{print $1}') || die "lsattr failed"
