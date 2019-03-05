@@ -23,6 +23,8 @@ function s_mdraid()
 function s_lvm()
 {
   [[ -z $(type -P vgs) ]] && return
+  local out="$(vgdisplay 2>&1)"
+  [[ -z $out ]] && return
 
   echo -en "LVM\n\n"
   (vgs; echo; lvs; echo)
