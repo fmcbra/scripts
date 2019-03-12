@@ -1,0 +1,16 @@
+#!/bin/bash
+
+mount \
+  |grep 'type btrfs' \
+  |awk '{print $3}' \
+  |while read fs
+do
+  p=$(df -h -BM "$fs" |grep -v ^Filesystem |awk '{print $5}' |sed 's/%$//')
+  [[ $p -ge 60 ]] || continue
+
+  echo "Warning: filesystem $fs is running low ($p% remaining)"
+done
+
+exit 0
+
+## vim: ts=2 sw=2 et fdm=marker :
