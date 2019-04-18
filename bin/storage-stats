@@ -33,10 +33,23 @@ function s_lvm()
 function s_usage()
 {
   echo -en "USAGE\n\n"
-  mount \
-    |egrep '^/dev/(sd|mapper|md)' \
-    |awk '{print $3}' \
-    |xargs df -h -B$UNITS
+
+  local m
+  for m in $(mount |awk '{print $3}')
+  do
+    case "$m" in
+      /sys|/proc|/dev|/dev/hugepages|/dev/mqueue|/dev/pts|/dev/shm|\
+      /run|/run/lock|/run/rpc_pipefs|/run/user/*|/sys/fs/cgroup/*|\
+      /sys/fs/pstore|/sys/fs/selinux|/sys/kernel/debug|\
+      /sys/kernel/security|/proc/sys/fs/binfmt_misc)
+        continue
+        ;;
+      *)
+        echo "$m"
+        ;;
+    esac
+
+  done |xargs df -h -B$UNITS
 }
 
 function main()
