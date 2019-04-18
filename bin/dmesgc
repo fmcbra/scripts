@@ -47,7 +47,7 @@ sub format_msg
     $msg = "CHAIN=$1 IN=$2";
 
     my %packet;
-    &parse_dropped_packet($1, \%packet);
+    &parse_dropped_packet($msg, \%packet);
 
     if ($packet{'PROTO'} eq 'ICMP')
     {
