@@ -42,7 +42,7 @@ sub format_msg
   #   MAC=xx:xx:xx:xx:xx:xx:yy:yy:yy:yy:yy:yy:yy:yy SRC=192.168.1.254 \
   #   DST=192.168.1.150 LEN=73 TOS=0x00 PREC=0x00 TTL=64 ID=0 DF PROTO=UDP \
   #   SPT=18018 DPT=46454 LEN=53
-  if ($msg =~ /^.* CHAIN=([^ ]+) IN=(.*)$/)
+  if ($msg =~ /CHAIN=([^ ]+) IN=(.*)$/)
   {
     $msg = "CHAIN=$1 IN=$2";
 
