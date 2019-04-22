@@ -45,7 +45,7 @@ def create_reflinks(root, files):
     dest = '/' + rel
     if os.path.isfile(dest):
       os.unlink(dest)
-    rc = os.system('cp --reflink=always %s %s' % (f, dest))
+    rc = os.system('cp --reflink=auto %s %s' % (f, dest))
     if rc == 0:
       continue
     print 'warning: %s: cp --reflink failed' % dest
