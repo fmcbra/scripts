@@ -45,7 +45,7 @@ function s_usage()
       /dev/shm|\
       /proc|\
       /proc/fs/nfsd|\
-      /proc/sys/fs/binfmt_misc)
+      /proc/sys/fs/binfmt_misc|\
       /run|\
       /run/lock|\
       /run/rpc_pipefs|\
