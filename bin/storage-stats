@@ -51,6 +51,8 @@ function s_usage()
       /run/rpc_pipefs|\
       /run/user/*|\
       /sys|\
+      /sys/firmware/efi/efivars|\
+      /sys/fs/bpf|\
       /sys/fs/cgroup|\
       /sys/fs/cgroup/*|\
       /sys/fs/fuse/connections|\
