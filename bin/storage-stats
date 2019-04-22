@@ -38,26 +38,26 @@ function s_usage()
   for m in $(mount |awk '{print $3}')
   do
     case "$m" in
-      /sys|\
-      /proc|\
       /dev|\
       /dev/hugepages|\
       /dev/mqueue|\
       /dev/pts|\
       /dev/shm|\
+      /proc|\
+      /proc/fs/nfsd|\
+      /proc/sys/fs/binfmt_misc)
       /run|\
       /run/lock|\
       /run/rpc_pipefs|\
       /run/user/*|\
+      /sys|\
       /sys/fs/cgroup|\
       /sys/fs/cgroup/*|\
       /sys/fs/fuse/connections|\
       /sys/fs/pstore|\
       /sys/fs/selinux|\
       /sys/kernel/debug|\
-      /sys/kernel/security|\
-      /proc/fs/nfsd|\
-      /proc/sys/fs/binfmt_misc)
+      /sys/kernel/security)
         continue
         ;;
       *)
