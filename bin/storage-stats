@@ -58,8 +58,11 @@ function s_usage()
       /sys/fs/fuse/connections|\
       /sys/fs/pstore|\
       /sys/fs/selinux|\
+      /sys/kernel/config|\
       /sys/kernel/debug|\
-      /sys/kernel/security)
+      /sys/kernel/debug/tracing|\
+      /sys/kernel/security|\
+      /var/lib/lxcfs)
         continue
         ;;
       *)
